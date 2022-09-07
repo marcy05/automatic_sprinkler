@@ -230,6 +230,14 @@ def reset_start_time():
     now = utime.localtime()
     print("START_TIME reset to: {}".format(now))
     START_TIME.initialize(now)
+
+def switch_off_all_relais():
+    for channel in range(len(multiplex_selector)):
+        d_s0.value(multiplex_selector[channel][0])
+        d_s1.value(multiplex_selector[channel][1])
+        d_s2.value(multiplex_selector[channel][2])
+        d_s3.value(multiplex_selector[channel][3])
+        d_sig.value(False)
     
 ###############################################################################
 #                               MAIN LOOP
@@ -248,7 +256,7 @@ while True:
             print("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
             relais_setter(channel, True)
             utime.sleep(IRRIGATION_TIMER)
-        
+        switch_off_all_relais()
         reset_start_time()
 
     else:
