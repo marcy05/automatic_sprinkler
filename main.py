@@ -159,6 +159,7 @@ d_s3 = machine.Pin(13, machine.Pin.OUT)
 d_sig = machine.Pin(15, machine.Pin.OUT)
 
 IRRIGATION_TIMER = 5 # seconds
+IRRIGATION_LOOPS = 1
 
 MAXIMUM_DIGITAL_CHANNELS = 7
 
@@ -252,11 +253,14 @@ while True:
     #TODO to be substituted with one day check
     if START_TIME.is_passed_max_min(CURRENT_TIME, DAYS_UP2WATER):
 
-        for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
-            print("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
-            relais_setter(channel, True)
-            utime.sleep(IRRIGATION_TIMER)
-        switch_off_all_relais()
+        for loop in range(0, IRRIGATION_LOOPS):
+            print("Irrigation loop: {}".format(loop))
+            for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
+                print("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
+                relais_setter(channel, True)
+                utime.sleep(IRRIGATION_TIMER)
+            switch_off_all_relais()
+
         reset_start_time()
 
     else:
