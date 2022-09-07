@@ -7,6 +7,7 @@ import utime
 class TimeHandler:
     """
     Class to handle the time difference using the utime class and initializing the current time based on the localtime() function
+    Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247) https://docs.micropython.org/en/v1.15/library/utime.html
     """
     def __init__(self):
         self.init_t = 0
@@ -122,10 +123,10 @@ class TimeHandler:
 #                               GLOBAL VARIABLES
 ###############################################################################
 
+#########   SYSTEM VARIABLES
 SYS_UPDATE_PERIOD = 5
 
-# Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247) https://docs.micropython.org/en/v1.15/library/utime.html
-
+#########   MUX RELATED VARIABLES
 multiplex_selector = [(0,0,0,0),
                       (1,0,0,0),
                       (0,1,0,0),
@@ -158,15 +159,19 @@ d_s2 = machine.Pin(12, machine.Pin.OUT)
 d_s3 = machine.Pin(13, machine.Pin.OUT)
 d_sig = machine.Pin(15, machine.Pin.OUT)
 
+# Set it to 16 if all channels are used.
+MAXIMUM_DIGITAL_CHANNELS = 7
+
+#########   IRRIGATION RELATED VARIABLES
 IRRIGATION_TIMER = 5 # seconds
 IRRIGATION_LOOPS = 1
 
-MAXIMUM_DIGITAL_CHANNELS = 7
+######### TIME HANDLING VARIABLES
 
-START_TIME = TimeHandler()
+START_TIME = TimeHandler()  # Reference time from when start to count, updated every time the relais are activated.
 CURRENT_TIME = TimeHandler()
 
-DAYS_UP2WATER = 1
+DAYS_UP2WATER = 1   # How frequently the relais should be activated to turn on the pumps
 
 ###############################################################################
 #                               FUNCTIONS
