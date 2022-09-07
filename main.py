@@ -105,13 +105,15 @@ class TimeHandler:
     
     def is_passed_max_days(self, current_time: TimeHandler, max_days: int):
         if current_time.day - self.day >= max_days:
+            print("START: {}".format(self.init_t))
+            print("Current: {}".format(current_time.init_t))
             return True
         return False
 
     def is_passed_max_min(self, current_time: TimeHandler, max_min: int):
-        print("START: {}".format(self.init_t))
-        print("Current: {}".format(current_time.init_t))
         if current_time.minute - self.minute >= max_min:
+            print("START: {}".format(self.init_t))
+            print("Current: {}".format(current_time.init_t))
             return True
         return False
 
@@ -119,6 +121,8 @@ class TimeHandler:
 ###############################################################################
 #                               GLOBAL VARIABLES
 ###############################################################################
+
+SYS_UPDATE_PERIOD = 5
 
 # Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247) https://docs.micropython.org/en/v1.15/library/utime.html
 
@@ -154,7 +158,7 @@ d_s2 = machine.Pin(12, machine.Pin.OUT)
 d_s3 = machine.Pin(13, machine.Pin.OUT)
 d_sig = machine.Pin(15, machine.Pin.OUT)
 
-IRRIGATION_TIMEOUT = 5 # seconds
+IRRIGATION_TIMER = 5 # seconds
 
 MAXIMUM_DIGITAL_CHANNELS = 7
 
@@ -197,7 +201,7 @@ def init():
     init_global_variables()
 
 
-def setter_digital(channel: int, signal: bool):
+def relais_setter(channel: int, signal: bool):
     global d_s0, d_s1, d_s2, d_s3
 
     if channel < 16:
@@ -205,7 +209,6 @@ def setter_digital(channel: int, signal: bool):
         d_s1.value(multiplex_selector[channel][1])
         d_s2.value(multiplex_selector[channel][2])
         d_s3.value(multiplex_selector[channel][3])
-        print("{}".format(multiplex_selector[channel]))
         d_sig.value(signal)
     else:
         print("impossible channel selected: {}".format(channel))
@@ -215,12 +218,26 @@ def continue_to_irrigate(last_irrigation : TimeHandler):
     now = TimeHandler()
     now.initialize(utime.localtime())
     
-    if last_irrigation.diff_day(now) >= IRRIGATION_TIMEOUT:
+    if last_irrigation.diff_day(now) >= IRRIGATION_TIMER:
         return True
     
     else:
         return False
 
+def reset_start_time():
+    global START_TIME
+    now = utime.localtime()
+    print("START_TIME reset to: {}".format(now))
+    START_TIME.initialize(now)
+
+def switch_off_all_relais():
+    for channel in range(len(multiplex_selector)):
+        d_s0.value(multiplex_selector[channel][0])
+        d_s1.value(multiplex_selector[channel][1])
+        d_s2.value(multiplex_selector[channel][2])
+        d_s3.value(multiplex_selector[channel][3])
+        d_sig.value(False)
+    print("Reset all channels")
     
 ###############################################################################
 #                               MAIN LOOP
@@ -232,15 +249,18 @@ sem = 0
 while True:
     CURRENT_TIME.initialize(utime.localtime())
 
+    #TODO to be substituted with one day check
     if START_TIME.is_passed_max_min(CURRENT_TIME, DAYS_UP2WATER):
 
-
         for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
-            print("Setting {}".format(channel))
-            setter_digital(channel, True)
-            utime.sleep(IRRIGATION_TIMEOUT)
+            print("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
+            relais_setter(channel, True)
+            utime.sleep(IRRIGATION_TIMER)
+        switch_off_all_relais()
+        reset_start_time()
+
     else:
-        utime.sleep(5)
+        utime.sleep(SYS_UPDATE_PERIOD)
 
         
  
