@@ -141,6 +141,30 @@ class TimeHandler:
         else:
             raise ValueError("Seconds have to be a positive number")
 
+###############################################################################
+#                               FUNCTIONS
+###############################################################################
+
+def init_digital():
+    for channel in range(len(multiplex_selector)):
+        d_s0.value(multiplex_selector[channel][0])
+        d_s1.value(multiplex_selector[channel][1])
+        d_s2.value(multiplex_selector[channel][2])
+        d_s3.value(multiplex_selector[channel][3])
+        d_sig.value(False)
+
+def init_analog():
+    for channel in range(len(multiplex_selector)):
+        a_s0.value(multiplex_selector[channel][0])
+        a_s1.value(multiplex_selector[channel][1])
+        a_s2.value(multiplex_selector[channel][2])
+        a_s3.value(multiplex_selector[channel][3])
+        a_sig.value(False)
+
+def init():
+    init_digital()
+    init_analog()
+
 
 
 def setter_digital(channel: int, signal: bool):
@@ -157,13 +181,7 @@ def setter_digital(channel: int, signal: bool):
         print("impossible channel selected: {}".format(channel))
 
 
-def init():
-    for channel in range(len(multiplex_selector)):
-        d_s0.value(multiplex_selector[channel][0])
-        d_s1.value(multiplex_selector[channel][1])
-        d_s2.value(multiplex_selector[channel][2])
-        d_s3.value(multiplex_selector[channel][3])
-        d_sig.value(False)
+
 
 
 
