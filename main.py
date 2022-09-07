@@ -122,6 +122,8 @@ class TimeHandler:
 #                               GLOBAL VARIABLES
 ###############################################################################
 
+SYS_UPDATE_PERIOD = 5
+
 # Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247) https://docs.micropython.org/en/v1.15/library/utime.html
 
 multiplex_selector = [(0,0,0,0),
@@ -250,7 +252,7 @@ while True:
         reset_start_time()
 
     else:
-        utime.sleep(5)
+        utime.sleep(SYS_UPDATE_PERIOD)
 
         
  
