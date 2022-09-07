@@ -105,13 +105,15 @@ class TimeHandler:
     
     def is_passed_max_days(self, current_time: TimeHandler, max_days: int):
         if current_time.day - self.day >= max_days:
+            print("START: {}".format(self.init_t))
+            print("Current: {}".format(current_time.init_t))
             return True
         return False
 
     def is_passed_max_min(self, current_time: TimeHandler, max_min: int):
-        print("START: {}".format(self.init_t))
-        print("Current: {}".format(current_time.init_t))
         if current_time.minute - self.minute >= max_min:
+            print("START: {}".format(self.init_t))
+            print("Current: {}".format(current_time.init_t))
             return True
         return False
 
@@ -232,6 +234,7 @@ sem = 0
 while True:
     CURRENT_TIME.initialize(utime.localtime())
 
+    #TODO to be substituted with one day check
     if START_TIME.is_passed_max_min(CURRENT_TIME, DAYS_UP2WATER):
 
 
