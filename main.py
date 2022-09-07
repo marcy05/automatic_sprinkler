@@ -9,7 +9,7 @@ class TimeHandler:
     Class to handle the time difference using the utime class and initializing the current time based on the localtime() function
     """
     def __init__(self):
-        self.init = 0
+        self.init_t = 0
         self.year = 0
         self.month = 0
         self.day = 0
@@ -28,15 +28,15 @@ class TimeHandler:
     
     def initialize(self, current_time: tuple):
         if len(current_time) == 8:
-            self.init = current_time
-            self.year = self.init[0]
-            self.month = self.init[1]
-            self.day = self.init[2]
-            self.hour = self.init[3]
-            self.minute = self.init[4]
-            self.second = self.init[5]
-            self.weekday = self.init[6]
-            self.yearday = self.init[7]
+            self.init_t = current_time
+            self.year = self.init_t[0]
+            self.month = self.init_t[1]
+            self.day = self.init_t[2]
+            self.hour = self.init_t[3]
+            self.minute = self.init_t[4]
+            self.second = self.init_t[5]
+            self.weekday = self.init_t[6]
+            self.yearday = self.init_t[7]
         else:
             print("Not possible to parse the current time")
     
@@ -102,6 +102,19 @@ class TimeHandler:
                             self.diff_s = diff
         else:
             raise ValueError("Seconds have to be a positive number")
+    
+    def is_passed_max_days(self, current_time: TimeHandler, max_days: int):
+        if current_time.day - self.day >= max_days:
+            return True
+        return False
+
+    def is_passed_max_min(self, current_time: TimeHandler, max_min: int):
+        print("START: {}".format(self.init_t))
+        print("Current: {}".format(current_time.init_t))
+        if current_time.minute - self.minute >= max_min:
+            return True
+        return False
+
 
 ###############################################################################
 #                               GLOBAL VARIABLES
@@ -147,6 +160,8 @@ MAXIMUM_DIGITAL_CHANNELS = 7
 
 START_TIME = TimeHandler()
 CURRENT_TIME = TimeHandler()
+
+DAYS_UP2WATER = 1
 
 ###############################################################################
 #                               FUNCTIONS
@@ -217,10 +232,15 @@ sem = 0
 while True:
     CURRENT_TIME.initialize(utime.localtime())
 
-    for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
-        print("Setting {}".format(channel))
-        setter_digital(channel, True)
-        utime.sleep(IRRIGATION_TIMEOUT)
+    if START_TIME.is_passed_max_min(CURRENT_TIME, DAYS_UP2WATER):
+
+
+        for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
+            print("Setting {}".format(channel))
+            setter_digital(channel, True)
+            utime.sleep(IRRIGATION_TIMEOUT)
+    else:
+        utime.sleep(5)
 
         
  
