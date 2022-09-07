@@ -44,6 +44,7 @@ IRRIGATION_TIMEOUT = 5 # seconds
 MAXIMUM_DIGITAL_CHANNELS = 7
 
 START_TIME = set()
+CURRENT_TIME = set()
 
 ###############################################################################
 #                               CLASSES
@@ -166,15 +167,16 @@ def init_mux_analog():
         a_s1.value(multiplex_selector[channel][1])
         a_s2.value(multiplex_selector[channel][2])
         a_s3.value(multiplex_selector[channel][3])
-        a_sig.value(False)
+        #a_sig.value(False) #ADC objects has no attribute 'value'
     
 def init_global_variables():
     global START_TIME
     START_TIME = utime.localtime()
+    CURRENT_TIME = utime.locatime()
 
 def init():
     init_mux_digital()
-    init_mux_analog()
+    #init_mux_analog() # no needs since it is used for analog and does not persist values in the value method
     init_global_variables()
 
 
@@ -211,6 +213,7 @@ init()
 sem = 0
 
 while True:
+    CURRENT_TIME = utime.localtime()
 
     for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
         print("Setting {}".format(channel))
