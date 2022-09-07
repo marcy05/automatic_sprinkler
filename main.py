@@ -172,7 +172,7 @@ def init_mux_analog():
 def init_global_variables():
     global START_TIME
     START_TIME = utime.localtime()
-    CURRENT_TIME = utime.locatime()
+    CURRENT_TIME = utime.localtime()
 
 def init():
     init_mux_digital()
