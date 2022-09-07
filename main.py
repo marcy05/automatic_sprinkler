@@ -184,14 +184,6 @@ def init_mux_digital():
         d_s2.value(multiplex_selector[channel][2])
         d_s3.value(multiplex_selector[channel][3])
         d_sig.value(False)
-
-def init_mux_analog():
-    for channel in range(len(multiplex_selector)):
-        a_s0.value(multiplex_selector[channel][0])
-        a_s1.value(multiplex_selector[channel][1])
-        a_s2.value(multiplex_selector[channel][2])
-        a_s3.value(multiplex_selector[channel][3])
-        #a_sig.value(False) #ADC objects has no attribute 'value'
     
 def init_global_variables():
     global START_TIME, CURRENT_TIME
@@ -203,7 +195,6 @@ def init_global_variables():
 
 def init():
     init_mux_digital()
-    #init_mux_analog() # no needs since it is used for analog and does not persist values in the value method
     init_global_variables()
 
 
