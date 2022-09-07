@@ -209,7 +209,6 @@ def relais_setter(channel: int, signal: bool):
         d_s1.value(multiplex_selector[channel][1])
         d_s2.value(multiplex_selector[channel][2])
         d_s3.value(multiplex_selector[channel][3])
-        print("{}".format(multiplex_selector[channel]))
         d_sig.value(signal)
     else:
         print("impossible channel selected: {}".format(channel))
@@ -238,6 +237,7 @@ def switch_off_all_relais():
         d_s2.value(multiplex_selector[channel][2])
         d_s3.value(multiplex_selector[channel][3])
         d_sig.value(False)
+    print("Reset all channels")
     
 ###############################################################################
 #                               MAIN LOOP
