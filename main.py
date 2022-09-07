@@ -41,6 +41,8 @@ d_sig = machine.Pin(15, machine.Pin.OUT)
 
 IRRIGATION_TIMEOUT = 5 # seconds
 
+MAXIMUM_DIGITAL_CHANNELS = 7
+
 ###############################################################################
 #                               CLASSES
 ###############################################################################
@@ -166,7 +168,6 @@ def init():
     init_analog()
 
 
-
 def setter_digital(channel: int, signal: bool):
     global d_s0, d_s1, d_s2, d_s3
 
@@ -179,11 +180,6 @@ def setter_digital(channel: int, signal: bool):
         d_sig.value(signal)
     else:
         print("impossible channel selected: {}".format(channel))
-
-
-
-
-
 
 
 def continue_to_irrigate(last_irrigation : TimeHandler):
@@ -204,7 +200,7 @@ sem = 0
 
 while True:
 
-    for channel in range(0, 7):
+    for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
         print("Setting {}".format(channel))
         setter_digital(channel, True)
         utime.sleep(IRRIGATION_TIMEOUT)
