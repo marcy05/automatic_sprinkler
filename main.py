@@ -48,6 +48,9 @@ MAXIMUM_DIGITAL_CHANNELS = 7
 ###############################################################################
 
 class TimeHandler:
+    """
+    Class to handle the time difference using the utime class and initializing the current time based on the localtime() function
+    """
     def __init__(self):
         self.init = 0
         self.year = 0
