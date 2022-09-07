@@ -199,7 +199,7 @@ def init():
     init_global_variables()
 
 
-def setter_digital(channel: int, signal: bool):
+def relais_setter(channel: int, signal: bool):
     global d_s0, d_s1, d_s2, d_s3
 
     if channel < 16:
@@ -240,7 +240,7 @@ while True:
 
         for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
             print("Setting {}".format(channel))
-            setter_digital(channel, True)
+            relais_setter(channel, True)
             utime.sleep(IRRIGATION_TIMEOUT)
     else:
         utime.sleep(5)
