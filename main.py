@@ -156,7 +156,7 @@ d_s2 = machine.Pin(12, machine.Pin.OUT)
 d_s3 = machine.Pin(13, machine.Pin.OUT)
 d_sig = machine.Pin(15, machine.Pin.OUT)
 
-IRRIGATION_TIMEOUT = 5 # seconds
+IRRIGATION_TIMER = 5 # seconds
 
 MAXIMUM_DIGITAL_CHANNELS = 7
 
@@ -217,7 +217,7 @@ def continue_to_irrigate(last_irrigation : TimeHandler):
     now = TimeHandler()
     now.initialize(utime.localtime())
     
-    if last_irrigation.diff_day(now) >= IRRIGATION_TIMEOUT:
+    if last_irrigation.diff_day(now) >= IRRIGATION_TIMER:
         return True
     
     else:
@@ -241,7 +241,7 @@ while True:
         for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
             print("Setting {}".format(channel))
             relais_setter(channel, True)
-            utime.sleep(IRRIGATION_TIMEOUT)
+            utime.sleep(IRRIGATION_TIMER)
     else:
         utime.sleep(5)
 
