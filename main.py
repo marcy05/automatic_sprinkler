@@ -223,6 +223,11 @@ def continue_to_irrigate(last_irrigation : TimeHandler):
     else:
         return False
 
+def reset_start_time():
+    global START_TIME
+    now = utime.localtime()
+    print("START_TIME reset to: {}".format(now))
+    START_TIME.initialize(now)
     
 ###############################################################################
 #                               MAIN LOOP
@@ -237,11 +242,13 @@ while True:
     #TODO to be substituted with one day check
     if START_TIME.is_passed_max_min(CURRENT_TIME, DAYS_UP2WATER):
 
-
         for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
-            print("Setting {}".format(channel))
+            print("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
             relais_setter(channel, True)
             utime.sleep(IRRIGATION_TIMER)
+        
+        reset_start_time()
+
     else:
         utime.sleep(5)
 
