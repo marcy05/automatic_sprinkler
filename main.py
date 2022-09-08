@@ -235,7 +235,7 @@ IRRIGATION_LOOPS = 2
 START_TIME = TimeHandler()  # Reference time from when start to count, updated every time the relais are activated.
 CURRENT_TIME = TimeHandler()
 
-DAYS_UP2WATER = 1   # How frequently the relais should be activated to turn on the pumps
+DAYS_UP2WATER = 6   # How frequently the relais should be activated to turn on the pumps
 
 logger = SimpleLogger(file_name="execution.log")
 
@@ -314,7 +314,7 @@ while True:
     CURRENT_TIME.initialize(utime.localtime())
 
     #TODO to be substituted with one day check
-    if START_TIME.is_passed_max_min(CURRENT_TIME, DAYS_UP2WATER):
+    if START_TIME.is_passed_max_hours(CURRENT_TIME, DAYS_UP2WATER):
 
         for loop in range(0, IRRIGATION_LOOPS):
             logger.debug("Irrigation loop: {}".format(loop))
