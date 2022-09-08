@@ -106,18 +106,82 @@ class TimeHandler:
     
     def is_passed_max_days(self, current_time: TimeHandler, max_days: int):
         if current_time.day - self.day >= max_days:
-            print("START: {}".format(self.init_t))
-            print("Current: {}".format(current_time.init_t))
+            logger.info("{}day(s) passed. Start time: {}; Current time: {}".format(max_days, self.init_t, current_time.init_t))
+            logger.debug("START: {}".format(self.init_t))
+            logger.debug("Current: {}".format(current_time.init_t))
+            return True
+        return False
+
+    def is_passed_max_hours(self, current_time: TimeHandler, max_hour: int):
+        if current_time.hour - self.hour >= max_days:
+            logger.info("{}h passed. Start time: {}; Current time: {}".format(max_hour, self.init_t, current_time.init_t))
             return True
         return False
 
     def is_passed_max_min(self, current_time: TimeHandler, max_min: int):
         if current_time.minute - self.minute >= max_min:
-            print("START: {}".format(self.init_t))
-            print("Current: {}".format(current_time.init_t))
+            logger.info("{}min passed. Start time: {}; Current time: {}".format(max_min, self.init_t, current_time.init_t))
             return True
         return False
 
+###############################################################################
+#                               LOGGING
+###############################################################################
+
+class SimpleLogger:
+    def __init__(self, file_name = None):
+        self.message = ""
+        self.file_name = file_name
+        self.level_value = 0
+
+    def new_start(self):
+        if self.file_name != None:
+            with open(self.file_name, 'a') as fw:
+                message = "="*50
+                message += "{}".format(utime.localtime())
+                message += "="*50
+                fw.write("DEBUG: {}\n".format(message))
+
+    def debug(self, message: str):
+        if self.file_name == None:
+            print("DEBUG: {}".format(message))
+        else:
+            print("DEBUG: {}".format(message))
+            with open(self.file_name, 'a') as fw:
+                fw.write("DEBUG: {}\n".format(message))
+
+    def info(self, message: str):
+        if self.file_name == None:
+            print("INFO: {}".format(message))
+        else:
+            print("INFO: {}".format(message))
+            with open(self.file_name, 'a') as fw:
+                fw.write("INFO: {}\n".format(message))
+
+    def warning(self, message: str):
+        if self.file_name == None:
+            print("WARNING: {}".format(message))
+        else:
+            print("WARNING: {}".format(message))
+            with open(self.file_name, 'a') as fw:
+                fw.write("WARNING: {}\n".format(message))
+
+    def error(self, message: str):
+        if self.file_name == None:
+            print("ERROR: {}".format(message))
+        else:
+            print("ERROR: {}".format(message))
+            with open(self.file_name, 'a') as fw:
+                fw.write("ERROR: {}\n".format(message))
+
+    def critical(self, message: str):
+        if self.file_name == None:
+            print("CRITICAL: {}".format(message))
+        else:
+            print("CRITICAL: {}".format(message))
+            with open(self.file_name, 'a') as fw:
+                fw.write("CRITICAL: {}\n".format(message))
+    
 
 ###############################################################################
 #                               GLOBAL VARIABLES
@@ -173,6 +237,8 @@ CURRENT_TIME = TimeHandler()
 
 DAYS_UP2WATER = 1   # How frequently the relais should be activated to turn on the pumps
 
+logger = SimpleLogger(file_name="execution.log")
+
 ###############################################################################
 #                               FUNCTIONS
 ###############################################################################
@@ -194,6 +260,7 @@ def init_global_variables():
     CURRENT_TIME.initialize(utime.localtime())
 
 def init():
+    logger.new_start()
     init_mux_digital()
     init_global_variables()
 
@@ -208,7 +275,7 @@ def relais_setter(channel: int, signal: bool):
         d_s3.value(multiplex_selector[channel][3])
         d_sig.value(signal)
     else:
-        print("impossible channel selected: {}".format(channel))
+        logger.critical("impossible channel selected: {}".format(channel))
 
 
 def continue_to_irrigate(last_irrigation : TimeHandler):
@@ -224,7 +291,7 @@ def continue_to_irrigate(last_irrigation : TimeHandler):
 def reset_start_time():
     global START_TIME
     now = utime.localtime()
-    print("START_TIME reset to: {}".format(now))
+    logger.info("START_TIME reset to: {}".format(now))
     START_TIME.initialize(now)
 
 def switch_off_all_relais():
@@ -234,7 +301,7 @@ def switch_off_all_relais():
         d_s2.value(multiplex_selector[channel][2])
         d_s3.value(multiplex_selector[channel][3])
         d_sig.value(False)
-    print("Reset all channels")
+    logger.info("Reset all channels")
     
 ###############################################################################
 #                               MAIN LOOP
@@ -250,9 +317,9 @@ while True:
     if START_TIME.is_passed_max_min(CURRENT_TIME, DAYS_UP2WATER):
 
         for loop in range(0, IRRIGATION_LOOPS):
-            print("Irrigation loop: {}".format(loop))
+            logger.debug("Irrigation loop: {}".format(loop))
             for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
-                print("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
+                logger.info("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
                 relais_setter(channel, True)
                 utime.sleep(IRRIGATION_TIMER)
             switch_off_all_relais()
