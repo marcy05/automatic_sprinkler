@@ -163,7 +163,7 @@ d_sig = machine.Pin(15, machine.Pin.OUT)
 MAXIMUM_DIGITAL_CHANNELS = 7
 
 #########   IRRIGATION RELATED VARIABLES
-IRRIGATION_TIMER = 5 # seconds
+IRRIGATION_TIMER = 7 # seconds almost a glass of water
 IRRIGATION_LOOPS = 1
 
 ######### TIME HANDLING VARIABLES
