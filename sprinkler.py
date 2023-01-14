@@ -211,17 +211,29 @@ multiplex_selector = [(0,0,0,0),
 # the multiplexer will be controlled by s0, s1, s2, s3 and the prefix "a_" will refer to the analog
 #   and "d_" will refer to the digital
 
-a_s0 = machine.Pin(21, machine.Pin.OUT)
-a_s1 = machine.Pin(20, machine.Pin.OUT)
-a_s2 = machine.Pin(19, machine.Pin.OUT)
-a_s3 = machine.Pin(18, machine.Pin.OUT)
-a_sig = machine.ADC(machine.Pin(26))
+PUMP_SIG = 10
+PUMP_S3 = 11
+PUMP_S2 = 12
+PUMP_S1 = 13
+PUMP_S0 = 15
 
-d_s0 = machine.Pin(10, machine.Pin.OUT)
-d_s1 = machine.Pin(11, machine.Pin.OUT)
-d_s2 = machine.Pin(12, machine.Pin.OUT)
-d_s3 = machine.Pin(13, machine.Pin.OUT)
-d_sig = machine.Pin(15, machine.Pin.OUT)
+SENSOR_SIG = 26
+SENSOR_S3 = 18
+SENSOR_S2 = 19
+SENSOR_S1 = 20
+SENSOR_S0 = 21
+
+a_s0 = machine.Pin(SENSOR_S0, machine.Pin.OUT)
+a_s1 = machine.Pin(SENSOR_S1, machine.Pin.OUT)
+a_s2 = machine.Pin(SENSOR_S2, machine.Pin.OUT)
+a_s3 = machine.Pin(SENSOR_S3, machine.Pin.OUT)
+a_sig = machine.ADC(machine.Pin(SENSOR_SIG))
+
+d_s0 = machine.Pin(PUMP_S0, machine.Pin.OUT)
+d_s1 = machine.Pin(PUMP_S1, machine.Pin.OUT)
+d_s2 = machine.Pin(PUMP_S2, machine.Pin.OUT)
+d_s3 = machine.Pin(PUMP_S3, machine.Pin.OUT)
+d_sig = machine.Pin(PUMP_SIG, machine.Pin.OUT)
 
 # Set it to 16 if all channels are used.
 MAXIMUM_DIGITAL_CHANNELS = 7
@@ -263,6 +275,7 @@ def init():
     logger.new_start()
     init_mux_digital()
     init_global_variables()
+    switch_off_all_relais()
 
 
 def relais_setter(channel: int, signal: bool):
@@ -313,8 +326,11 @@ sem = 0
 while True:
     CURRENT_TIME.initialize(utime.localtime())
 
+
     #TODO to be substituted with one day check
     if START_TIME.is_passed_max_hours(CURRENT_TIME, DAYS_UP2WATER):
+    #if True:
+        print("Running")
 
         for loop in range(0, IRRIGATION_LOOPS):
             logger.debug("Irrigation loop: {}".format(loop))
@@ -328,7 +344,4 @@ while True:
 
     else:
         utime.sleep(SYS_UPDATE_PERIOD)
-
-        
- 
 
