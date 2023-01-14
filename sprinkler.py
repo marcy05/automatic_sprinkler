@@ -113,7 +113,7 @@ class TimeHandler:
         return False
 
     def is_passed_max_hours(self, current_time: TimeHandler, max_hour: int):
-        if current_time.hour - self.hour >= max_days:
+        if current_time.hour - self.hour >= max_hour:
             logger.info("{}h passed. Start time: {}; Current time: {}".format(max_hour, self.init_t, current_time.init_t))
             return True
         return False
