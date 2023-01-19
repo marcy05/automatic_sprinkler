@@ -25,6 +25,7 @@ class TimeHandler:
         self.diff_s = 0
         
     def get_time(self):
+        """ get_time() -> string, 'h:m:s'"""
         return "{}:{}:{}".format(self.hour, self.minute, self.second)
     
     def initialize(self, current_time: tuple):
@@ -42,9 +43,11 @@ class TimeHandler:
             print("Not possible to parse the current time")
     
     def print(self):
-        print("{}:{}:{}".format(self.day, self.minute, self.hour))
+        """ print() -> string, 'day:h:min'"""
+        print("{}:{}:{}".format(self.day, self.hour, self.minute))
     
     def get_diff(self):
+        """ get_diff() -> string, 'diff - h:min:s'"""
         return "{} - {}:{}:{}".format(self.diff_d, self.diff_h, self.diff_m, self.diff_s)
 
     def diff_day(self, comparison:TimeHandler):
@@ -105,6 +108,12 @@ class TimeHandler:
             raise ValueError("Seconds have to be a positive number")
     
     def is_passed_max_days(self, current_time: TimeHandler, max_days: int):
+        """is_passed_max_days(...) -> bool 
+        
+            Arguments:
+                current_time: TimeHandler, time to be checked against
+                max_days: int, maximum days to be compared with
+        """
         if current_time.day - self.day >= max_days:
             logger.info("{}day(s) passed. Start time: {}; Current time: {}".format(max_days, self.init_t, current_time.init_t))
             logger.debug("START: {}".format(self.init_t))
@@ -113,12 +122,24 @@ class TimeHandler:
         return False
 
     def is_passed_max_hours(self, current_time: TimeHandler, max_hour: int):
+        """is_passed_max_hours(...) -> bool 
+        
+            Arguments:
+                current_time: TimeHandler, time to be checked against
+                max_hour: int, maximum hours to be compared with
+        """
         if current_time.hour - self.hour >= max_hour:
             logger.info("{}h passed. Start time: {}; Current time: {}".format(max_hour, self.init_t, current_time.init_t))
             return True
         return False
 
     def is_passed_max_min(self, current_time: TimeHandler, max_min: int):
+        """is_passed_max_min(...) -> bool 
+        
+            Arguments:
+                current_time: TimeHandler, time to be checked against
+                max_min: int, maximum minutes to be compared with
+        """
         if current_time.minute - self.minute >= max_min:
             logger.info("{}min passed. Start time: {}; Current time: {}".format(max_min, self.init_t, current_time.init_t))
             return True
@@ -129,59 +150,82 @@ class TimeHandler:
 ###############################################################################
 
 class SimpleLogger:
-    def __init__(self, file_name = None):
+    """Class to handle logging events"""
+    def __init__(self, file_name = None, log2file: bool = False, log2console: bool = True,
+                    min_log_level: int = 0):
         self.message = ""
         self.file_name = file_name
-        self.level_value = 0
+        self.log2file = log2file
+        self.log2console = log2console
+        self.log_level = min_log_level
 
     def new_start(self):
-        if self.file_name != None:
-            with open(self.file_name, 'a') as fw:
-                message = "="*50
-                message += "{}".format(utime.localtime())
-                message += "="*50
-                fw.write("DEBUG: {}\n".format(message))
+        message = "="*50
+        message += "{}".format(utime.localtime())
+        message += "="*50
+
+        if self.log2console:
+            print(message)
+
+        if self.log2file:
+            if self.file_name is not None:
+                with open(self.file_name, 'a') as fw:
+                    fw.write("DEBUG: {}\n".format(message))
+            else:
+                print("Warn: seems that you are willing to log to file but filename is missing.")
+
 
     def debug(self, message: str):
-        if self.file_name == None:
-            print("DEBUG: {}".format(message))
-        else:
-            print("DEBUG: {}".format(message))
-            with open(self.file_name, 'a') as fw:
-                fw.write("DEBUG: {}\n".format(message))
+        if self.log_level == 0 or self.log_level <= 10:
+
+            if self.log2console:
+                print("DEBUG: {}".format(message))
+
+            if self.log2file:
+                if self.file_name is not None:
+                    with open(self.file_name, 'a') as fw:
+                        fw.write("DEBUG: {}\n".format(message))
 
     def info(self, message: str):
-        if self.file_name == None:
-            print("INFO: {}".format(message))
-        else:
-            print("INFO: {}".format(message))
-            with open(self.file_name, 'a') as fw:
-                fw.write("INFO: {}\n".format(message))
+        if self.log_level == 0 or self.log_level <= 20:
+            if self.log2console:
+                print("INFO: {}".format(message))
+            
+            if self.log2file:
+                if self.file_name is not None:
+                    with open(self.file_name, 'a') as fw:
+                        fw.write("INFO: {}\n".format(message))
 
     def warning(self, message: str):
-        if self.file_name == None:
-            print("WARNING: {}".format(message))
-        else:
-            print("WARNING: {}".format(message))
-            with open(self.file_name, 'a') as fw:
-                fw.write("WARNING: {}\n".format(message))
+        if self.log_level == 0 or self.log_level <= 30:
+            if self.log2console:
+                print("WARNING: {}".format(message))
+
+            if self.log2file:
+                if self.file_name is not None:
+                    with open(self.file_name, 'a') as fw:
+                        fw.write("WARNING: {}\n".format(message))
 
     def error(self, message: str):
-        if self.file_name == None:
-            print("ERROR: {}".format(message))
-        else:
-            print("ERROR: {}".format(message))
-            with open(self.file_name, 'a') as fw:
-                fw.write("ERROR: {}\n".format(message))
+        if self.log_level == 0 or self.log_level <= 40:
+            if self.log2console:
+                print("ERROR: {}".format(message))
+            
+            if self.log2file:
+                if self.file_name is not None:
+                    with open(self.file_name, 'a') as fw:
+                        fw.write("ERROR: {}\n".format(message))
 
     def critical(self, message: str):
-        if self.file_name == None:
-            print("CRITICAL: {}".format(message))
-        else:
-            print("CRITICAL: {}".format(message))
-            with open(self.file_name, 'a') as fw:
-                fw.write("CRITICAL: {}\n".format(message))
-    
+        if self.log_level == 0 or self.log_level <= 10:
+            if self.log2console:
+                print("CRITICAL: {}".format(message))
+
+            if self.log2file:
+                if self.file_name is not None:
+                    with open(self.file_name, 'a') as fw:
+                        fw.write("CRITICAL: {}\n".format(message))
+
 
 ###############################################################################
 #                               GLOBAL VARIABLES
