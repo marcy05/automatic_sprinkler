@@ -6,8 +6,10 @@ import utime
 
 class TimeHandler:
     """
-    Class to handle the time difference using the utime class and initializing the current time based on the localtime() function
-    Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247) https://docs.micropython.org/en/v1.15/library/utime.html
+    Class to handle the time difference using the utime class and initializing the current time based on the localtime() function.
+
+    Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247) (year, month, mday, hour, minute, second, weekday, yearday)
+    https://docs.micropython.org/en/v1.15/library/utime.html
     """
     def __init__(self):
         self.init_t = 0
@@ -144,6 +146,18 @@ class TimeHandler:
             logger.info("{}min passed. Start time: {}; Current time: {}".format(max_min, self.init_t, current_time.init_t))
             return True
         return False
+
+    def is_daytime(self):
+        """is_datetime() -> bool
+
+            Returns:
+                True: if 8 < hour < 19
+                False: in all other cases
+        """
+        if self.hour > 8 and self.hour < 19:
+            return True
+        else:
+            return False
 
 ###############################################################################
 #                               LOGGING
