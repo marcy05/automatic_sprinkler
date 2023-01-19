@@ -384,22 +384,36 @@ sem = 0
 while True:
     CURRENT_TIME.initialize(utime.localtime())
 
+    if CURRENT_TIME.is_daytime():
 
-    #TODO to be substituted with one day check
-    if START_TIME.is_passed_max_hours(CURRENT_TIME, DAYS_UP2WATER):
-    #if True:
-        print("Running")
+        if is_water_sensor_present():
 
-        for loop in range(0, IRRIGATION_LOOPS):
-            logger.debug("Irrigation loop: {}".format(loop))
-            for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
-                logger.info("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
-                relais_setter(channel, True)
-                utime.sleep(IRRIGATION_TIMER)
-            switch_off_all_relais()
+            if is_plant_dry():
+                pass
+                # activate the pumps
+            else:
+                pass
+                # log plants still wet
+        else:
+            START_TIME.is_passed_max_hours(CURRENT_TIME, DAYS_UP2WATER)
+            # activate the pumps
 
-        reset_start_time()
 
-    else:
-        utime.sleep(SYS_UPDATE_PERIOD)
+    # #TODO to be substituted with one day check
+    # if START_TIME.is_passed_max_hours(CURRENT_TIME, DAYS_UP2WATER):
+    # #if True:
+    #     print("Running")
+
+    #     for loop in range(0, IRRIGATION_LOOPS):
+    #         logger.debug("Irrigation loop: {}".format(loop))
+    #         for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
+    #             logger.info("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
+    #             relais_setter(channel, True)
+    #             utime.sleep(IRRIGATION_TIMER)
+    #         switch_off_all_relais()
+
+    #     reset_start_time()
+
+    # else:
+    #     utime.sleep(SYS_UPDATE_PERIOD)
 
