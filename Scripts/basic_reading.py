@@ -73,9 +73,9 @@ def main():
     counter = 0
     while True:
         counter += 1
-        sensors_value = [0,0,0,0,0,0,0]
+        sensors_value = []
         for i in range(0, MAXIMUM_DIGITAL_CHANNELS):
-            sensors_value.append(get_analog_read(i))
+            sensors_value.append(int(get_analog_read(i)))
         print("Run: {}\nS0: {}\nS1: {}\nS2: {}\nS3: {}\nS4: {}\nS5: {}\nS6: {}\n".format(counter, sensors_value[0],
                                                                                          sensors_value[1],
                                                                                          sensors_value[2],
@@ -121,4 +121,4 @@ def main2():
         print("Reading {}: {}".format(counter, a_sig.read_u16()))
         utime.sleep(2)
 
-main2()
+main()
