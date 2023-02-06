@@ -70,6 +70,9 @@ def get_analog_read(sensor: int):
 
 
 def main():
+    """
+    Read the values from all sensors, put in in a list and print them all together.
+    """
     counter = 0
     while True:
         counter += 1
@@ -87,6 +90,10 @@ def main():
 
 
 def main1():
+    """
+    Read from GPIO 26.
+    """
+
     read_analog = machine.ADC(26)
     
     counter = 0
@@ -96,11 +103,16 @@ def main1():
         utime.sleep(2)
 
 def main2():
+    """
+    Read from multiplexer the CONSIDERED_SENSOR.
+    """
     SENSOR_SIG = 26
     SENSOR_S3 = 18
     SENSOR_S2 = 19
     SENSOR_S1 = 20
     SENSOR_S0 = 21
+
+    CONSIDERED_SENSOR = 0
 
     a_s0 = machine.Pin(SENSOR_S0, machine.Pin.OUT)
     a_s1 = machine.Pin(SENSOR_S1, machine.Pin.OUT)
@@ -108,12 +120,10 @@ def main2():
     a_s3 = machine.Pin(SENSOR_S3, machine.Pin.OUT)
     a_sig = machine.ADC(SENSOR_SIG)
 
-    a_s0.value(multiplex_selector[0][0])
-    a_s1.value(multiplex_selector[0][1])
-    a_s2.value(multiplex_selector[0][2])
-    a_s3.value(multiplex_selector[0][3])
-
-    read_analog = machine.ADC(26)
+    a_s0.value(multiplex_selector[CONSIDERED_SENSOR][0])
+    a_s1.value(multiplex_selector[CONSIDERED_SENSOR][1])
+    a_s2.value(multiplex_selector[CONSIDERED_SENSOR][2])
+    a_s3.value(multiplex_selector[CONSIDERED_SENSOR][3])
     
     counter = 0
     while True:

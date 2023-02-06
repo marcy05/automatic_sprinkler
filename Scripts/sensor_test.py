@@ -143,10 +143,13 @@ def get_analog_read(sensor: int):
 
 
 def main():
+    """
+    Read from all sensor via multiplexer and print via get_info method which return
+        if the sensor is connected, grounded or unknown.
+    """
     counter = 0
 
     sensor_dic = {}
-    print("init array")
 
     while True:
         for i in range(0, MAXIMUM_DIGITAL_CHANNELS):
@@ -168,7 +171,9 @@ def main():
 
 
 def main2():
-
+    """
+    Test if the sensors are reading correctly based on thresholds.
+    """
     considered_sensor = 6
 
     WET_REF = 1.8
@@ -190,6 +195,12 @@ def main2():
 
 
 def main3():
+    """
+    Test the conversion from digital read to volt.
+
+    The conversion is based on 16bit sensor and 3.3V
+    """
+
     sensor = 0
     a_s0.value(multiplex_selector[sensor][0])
     a_s1.value(multiplex_selector[sensor][1])
