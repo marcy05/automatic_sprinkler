@@ -188,6 +188,7 @@ class WaterSensor:
         self.max: float = 3.3  # Volts
         self.percentage: int = 0
         self.current_value: float = 0
+        self.is_active: bool = False
 
     def __update_percentage(self):
         if self.max != 0 and self.max > self.min:
@@ -199,6 +200,30 @@ class WaterSensor:
     def insert_value(self, value: float):
         self.current_value = value
         self.__update_percentage()
+
+
+class SensorHandler:
+    def __init__(self):
+        self.sensor_dict = {"0": WaterSensor(),
+                            "1": WaterSensor(),
+                            "2": WaterSensor(),
+                            "3": WaterSensor(),
+                            "4": WaterSensor(),
+                            "5": WaterSensor(),
+                            "6": WaterSensor()}
+
+    def init_sensors(self):
+        for i in range(0, MAXIMUM_DIGITAL_CHANNELS):
+            read_value = get_voltage_from_mutex(i)
+
+        if read_value > 2.9:
+            current_sensor = self.sensors_dict[str(i)]
+            current_sensor.is_active = True
+            self.sensor_dict[str(i)] = current_sensor
+            logger.info("Sensor Found in position: {}".format(i))
+        else:
+            logger.warning(
+                "Sensor not found in position: {}".format(i))
 
 
 ###############################################################################
@@ -352,6 +377,10 @@ DAYS_UP2WATER = 6   # How frequently the relais should be activated to turn on t
 
 logger = SimpleLogger(file_name="execution.log")
 
+# ####### SENSOR HANDLER
+
+sensor_h = SensorHandler()
+
 ###############################################################################
 #                               FUNCTIONS
 ###############################################################################
@@ -375,11 +404,21 @@ def init_global_variables():
     CURRENT_TIME.initialize(utime.localtime())
 
 
+def get_voltage_from_mutex(sensor: int):
+    a_s0.value(multiplex_selector[sensor][0])
+    a_s1.value(multiplex_selector[sensor][1])
+    a_s2.value(multiplex_selector[sensor][2])
+    a_s3.value(multiplex_selector[sensor][3])
+    volt = read_u16(a_sig.read_u16())
+    return volt
+
+
 def init():
     logger.new_start()
     init_mux_digital()
     init_global_variables()
     switch_off_all_relais()
+    sensor_h.init_sensors()
 
 
 def relais_setter(channel: int, signal: bool):
