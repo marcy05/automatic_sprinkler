@@ -159,6 +159,25 @@ class TimeHandler:
         else:
             return False
 
+
+class WaterSensor:
+    def __init__(self) -> None:
+        self.min: float = 0.0  # Volts
+        self.max: float = 3.3  # Volts
+        self.percentage: int = 0
+        self.current_value: float = 0
+
+    def __update_percentage(self):
+        if self.max != 0 and self.max > self.min:
+            self.percentage = 100 - int((self.max - self.current_value)*100/(self.max - self.min))
+        else:
+            self.percentage = 0
+
+    def insert_value(self, value: float):
+        self.current_value = value
+        self.__update_percentage()
+
+
 ###############################################################################
 #                               LOGGING
 ###############################################################################
@@ -374,7 +393,13 @@ def switch_off_all_relais():
         d_s3.value(multiplex_selector[channel][3])
         d_sig.value(False)
     logger.info("Reset all channels")
-    
+
+def read_u16(adc_read: int):
+    """
+    Convert the Vdigit to Volt value from ADC.
+    """
+    return adc_read * 3.3 / 65535
+
 ###############################################################################
 #                               MAIN LOOP
 ###############################################################################
