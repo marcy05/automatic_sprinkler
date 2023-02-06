@@ -4,11 +4,14 @@ import utime
 #                               CLASSES
 ###############################################################################
 
+
 class TimeHandler:
     """
-    Class to handle the time difference using the utime class and initializing the current time based on the localtime() function.
+    Class to handle the time difference using the utime class and initializing
+     the current time based on the localtime() function.
 
-    Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247) (year, month, mday, hour, minute, second, weekday, yearday)
+    Reference utime.localtime() returns (2022, 9, 4, 19, 40, 5, 6, 247)
+     (year, month, mday, hour, minute, second, weekday, yearday)
     https://docs.micropython.org/en/v1.15/library/utime.html
     """
     def __init__(self):
@@ -50,9 +53,12 @@ class TimeHandler:
     
     def get_diff(self):
         """ get_diff() -> string, 'diff - h:min:s'"""
-        return "{} - {}:{}:{}".format(self.diff_d, self.diff_h, self.diff_m, self.diff_s)
+        return "{} - {}:{}:{}".format(self.diff_d,
+                                      self.diff_h,
+                                      self.diff_m,
+                                      self.diff_s)
 
-    def diff_day(self, comparison:TimeHandler):
+    def diff_day(self, comparison: TimeHandler):
         self.diff_d = 0
         self.diff_m = 0
         self.diff_h = 0
@@ -62,8 +68,14 @@ class TimeHandler:
         HOUR_IN_S = 3600
         DAY_IN_S = 86400
 
-        total_seconds = self.second + self.minute*MIN_IN_S + self.hour*HOUR_IN_S + self.day*DAY_IN_S
-        comp_tot_sec = comparison.second + comparison.minute*MIN_IN_S + comparison.hour*HOUR_IN_S + comparison.day*DAY_IN_S
+        total_seconds = self.second + \
+            self.minute*MIN_IN_S + \
+            self.hour*HOUR_IN_S + \
+            self.day*DAY_IN_S
+        comp_tot_sec = comparison.second + \
+            comparison.minute*MIN_IN_S + \
+            comparison.hour*HOUR_IN_S + \
+            comparison.day*DAY_IN_S
 
         diff = comp_tot_sec - total_seconds
 
@@ -73,11 +85,15 @@ class TimeHandler:
                     self.diff_d = 1
                 else:
                     self.diff_d = int(diff // DAY_IN_S)
-                    remaining_seconds_for_h_conversion = diff - self.diff_d * DAY_IN_S
-                    self.diff_h = int(remaining_seconds_for_h_conversion//HOUR_IN_S)
-                    remaining_seconds_for_min_conversion = remaining_seconds_for_h_conversion - self.diff_h*HOUR_IN_S
-                    self.diff_m = int(remaining_seconds_for_min_conversion // MIN_IN_S)
-                    self.diff_s = int(remaining_seconds_for_min_conversion - self.diff_m * MIN_IN_S)
+                    remaining_s_for_h_conv = diff - \
+                        self.diff_d * DAY_IN_S
+                    self.diff_h = int(
+                        remaining_s_for_h_conv//HOUR_IN_S)
+                    remain_s_from_m_conv = remaining_s_for_h_conv -\
+                        self.diff_h*HOUR_IN_S
+                    self.diff_m = int(remain_s_from_m_conv // MIN_IN_S)
+                    self.diff_s = int(
+                        remain_s_from_m_conv - self.diff_m * MIN_IN_S)
                     
             else:
                 if diff >= HOUR_IN_S:
@@ -92,7 +108,8 @@ class TimeHandler:
                                 self.diff_m = 1
                             else:
                                 self.diff_m = int(rem_sec_for_min // MIN_IN_S)
-                                self.diff_m.second = int(rem_sec_for_min - self.diff_m * MIN_IN_S)
+                                self.diff_m.second = int(
+                                    rem_sec_for_min - self.diff_m * MIN_IN_S)
                         else:
                             self.diff_s = diff
                 else:
@@ -108,16 +125,18 @@ class TimeHandler:
                             self.diff_s = diff
         else:
             raise ValueError("Seconds have to be a positive number")
-    
+
     def is_passed_max_days(self, current_time: TimeHandler, max_days: int):
-        """is_passed_max_days(...) -> bool 
-        
+        """is_passed_max_days(...) -> bool
+
             Arguments:
                 current_time: TimeHandler, time to be checked against
                 max_days: int, maximum days to be compared with
         """
         if current_time.day - self.day >= max_days:
-            logger.info("{}day(s) passed. Start time: {}; Current time: {}".format(max_days, self.init_t, current_time.init_t))
+            logger.info("{}day(s) passed. Start time: {}; "
+                        "Current time: {}".format(max_days, self.init_t,
+                                                  current_time.init_t))
             logger.debug("START: {}".format(self.init_t))
             logger.debug("Current: {}".format(current_time.init_t))
             return True
@@ -125,25 +144,28 @@ class TimeHandler:
 
     def is_passed_max_hours(self, current_time: TimeHandler, max_hour: int):
         """is_passed_max_hours(...) -> bool 
-        
+
             Arguments:
                 current_time: TimeHandler, time to be checked against
                 max_hour: int, maximum hours to be compared with
         """
         if current_time.hour - self.hour >= max_hour:
-            logger.info("{}h passed. Start time: {}; Current time: {}".format(max_hour, self.init_t, current_time.init_t))
+            logger.info("{}h passed. Start time: {}; Current time: {}".format(
+                max_hour, self.init_t, current_time.init_t))
             return True
         return False
 
     def is_passed_max_min(self, current_time: TimeHandler, max_min: int):
-        """is_passed_max_min(...) -> bool 
-        
+        """is_passed_max_min(...) -> bool
+
             Arguments:
                 current_time: TimeHandler, time to be checked against
                 max_min: int, maximum minutes to be compared with
         """
         if current_time.minute - self.minute >= max_min:
-            logger.info("{}min passed. Start time: {}; Current time: {}".format(max_min, self.init_t, current_time.init_t))
+            logger.info("{}min passed. Start time: {};"
+                        "Current time: {}".format(
+                            max_min, self.init_t, current_time.init_t))
             return True
         return False
 
@@ -169,7 +191,8 @@ class WaterSensor:
 
     def __update_percentage(self):
         if self.max != 0 and self.max > self.min:
-            self.percentage = 100 - int((self.max - self.current_value)*100/(self.max - self.min))
+            self.percentage = 100 - int(
+                (self.max - self.current_value)*100/(self.max - self.min))
         else:
             self.percentage = 0
 
@@ -184,8 +207,8 @@ class WaterSensor:
 
 class SimpleLogger:
     """Class to handle logging events"""
-    def __init__(self, file_name = None, log2file: bool = False, log2console: bool = True,
-                    min_log_level: int = 0):
+    def __init__(self, file_name=None, log2file: bool = False,
+                 log2console: bool = True, min_log_level: int = 0):
         self.message = ""
         self.file_name = file_name
         self.log2file = log2file
@@ -205,8 +228,8 @@ class SimpleLogger:
                 with open(self.file_name, 'a') as fw:
                     fw.write("DEBUG: {}\n".format(message))
             else:
-                print("Warn: seems that you are willing to log to file but filename is missing.")
-
+                print("Warn: seems that you are willing to log to file but"
+                      " filename is missing.")
 
     def debug(self, message: str):
         if self.log_level == 0 or self.log_level <= 10:
@@ -264,29 +287,29 @@ class SimpleLogger:
 #                               GLOBAL VARIABLES
 ###############################################################################
 
-#########   SYSTEM VARIABLES
+# #######   SYSTEM VARIABLES
 SYS_UPDATE_PERIOD = 5
 
-#########   MUX RELATED VARIABLES
-multiplex_selector = [(0,0,0,0),
-                      (1,0,0,0),
-                      (0,1,0,0),
-                      (1,1,0,0),
-                      (0,0,1,0),
-                      (1,0,1,0),
-                      (0,1,1,0),
-                      (1,1,1,0),
-                      (0,0,0,1),
-                      (1,0,0,1),
-                      (0,1,0,1),
-                      (1,1,0,1),
-                      (0,0,1,1),
-                      (1,0,1,1),
-                      (0,1,1,1),
-                      (1,1,1,1)]
+# #######   MUX RELATED VARIABLES
+multiplex_selector = [(0 0, 0, 0),
+                      (1 0, 0, 0),
+                      (0 1, 0, 0),
+                      (1 1, 0, 0),
+                      (0 0, 1, 0),
+                      (1 0, 1, 0),
+                      (0 1, 1, 0),
+                      (1 1, 1, 0),
+                      (0 0, 0, 1),
+                      (1 0, 0, 1),
+                      (0 1, 0, 1),
+                      (1 1, 0, 1),
+                      (0 0, 1, 1),
+                      (1 0, 1, 1),
+                      (0 1, 1, 1),
+                      (1 1, 1, 1)]
 
-# the multiplexer will be controlled by s0, s1, s2, s3 and the prefix "a_" will refer to the analog
-#   and "d_" will refer to the digital
+# the multiplexer will be controlled by s0, s1, s2, s3 and the prefix "a_"
+#  will refer to the analog and "d_" will refer to the digital
 
 PUMP_SIG = 10
 PUMP_S3 = 11
@@ -316,11 +339,11 @@ d_sig = machine.Pin(PUMP_SIG, machine.Pin.OUT)
 # Set it to 16 if all channels are used.
 MAXIMUM_DIGITAL_CHANNELS = 7
 
-#########   IRRIGATION RELATED VARIABLES
-IRRIGATION_TIMER = 7 # seconds almost a glass of water
+# #######   IRRIGATION RELATED VARIABLES
+IRRIGATION_TIMER = 7  # seconds almost a glass of water
 IRRIGATION_LOOPS = 2
 
-######### TIME HANDLING VARIABLES
+# ####### TIME HANDLING VARIABLES
 
 START_TIME = TimeHandler()  # Reference time from when start to count, updated every time the relais are activated.
 CURRENT_TIME = TimeHandler()
@@ -333,6 +356,7 @@ logger = SimpleLogger(file_name="execution.log")
 #                               FUNCTIONS
 ###############################################################################
 
+
 def init_mux_digital():
     for channel in range(len(multiplex_selector)):
         d_s0.value(multiplex_selector[channel][0])
@@ -340,7 +364,8 @@ def init_mux_digital():
         d_s2.value(multiplex_selector[channel][2])
         d_s3.value(multiplex_selector[channel][3])
         d_sig.value(False)
-    
+
+
 def init_global_variables():
     global START_TIME, CURRENT_TIME
     START_TIME = TimeHandler()
@@ -348,6 +373,7 @@ def init_global_variables():
 
     CURRENT_TIME = TimeHandler()
     CURRENT_TIME.initialize(utime.localtime())
+
 
 def init():
     logger.new_start()
@@ -369,21 +395,23 @@ def relais_setter(channel: int, signal: bool):
         logger.critical("impossible channel selected: {}".format(channel))
 
 
-def continue_to_irrigate(last_irrigation : TimeHandler):
+def continue_to_irrigate(last_irrigation: TimeHandler):
     now = TimeHandler()
     now.initialize(utime.localtime())
-    
+
     if last_irrigation.diff_day(now) >= IRRIGATION_TIMER:
         return True
-    
+
     else:
         return False
+
 
 def reset_start_time():
     global START_TIME
     now = utime.localtime()
     logger.info("START_TIME reset to: {}".format(now))
     START_TIME.initialize(now)
+
 
 def switch_off_all_relais():
     for channel in range(len(multiplex_selector)):
@@ -394,6 +422,7 @@ def switch_off_all_relais():
         d_sig.value(False)
     logger.info("Reset all channels")
 
+
 def read_u16(adc_read: int):
     """
     Convert the Vdigit to Volt value from ADC.
@@ -403,6 +432,8 @@ def read_u16(adc_read: int):
 ###############################################################################
 #                               MAIN LOOP
 ###############################################################################
+
+
 init()
 
 sem = 0
