@@ -17,11 +17,16 @@ If you find this project it means that you are going to build it :)
 
 * Some connectors
 
-* Some cables (suggested 28 AWG)
+* Some cables
 
-* Power supply connector
+* Power supply connector DC-005 [Link](https://www.amazon.it/Sourcing-Alimentazione-connettore-Femmina-Supporto/dp/B07KYBRJXQ/ref=sr_1_6?__mk_it_IT=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=K79VMFLPMOE0&keywords=DC-005&qid=1675707821&sprefix=dc-005%2Caps%2C954&sr=8-6)
 
 * 1x DC-DC buck converter [Link](https://www.amazon.it/gp/product/B0823P6PW6/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)
+
+## Circuit creation
+
+It is possible to use the file [Sprinkler_v3_20221229.pdf](Board/Sprinkler_v3_20221229.pdf) to create the circuit on your own or you can use the files in [Production](Board/Production/) to manufacture the board yourselfe.
+
 
 ## Software
 
