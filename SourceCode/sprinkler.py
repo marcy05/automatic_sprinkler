@@ -189,6 +189,13 @@ class WaterSensor:
         self.percentage: int = 0
         self.current_value: float = 0
         self.is_active: bool = False
+        self._grounded_threashold = 0.9
+        self._dry_threshold = 2.8
+        self._wet_threashold = 1.5
+
+        self._dry = False
+        self._wet = False
+        self._water_needed = False
 
     def __update_percentage(self):
         if self.max != 0 and self.max > self.min:
@@ -201,6 +208,39 @@ class WaterSensor:
         self.current_value = value
         self.__update_percentage()
 
+    def is_dry(self):
+        return self._dry
+    
+    def is_wet(self):
+        return self._wet
+    
+    def is_water_needed(self):
+        return self._water_needed
+
+    def update_current_value(self, update_value: float):
+        self.current_value = update_value
+        if self.current_value >= self._dry_threshold:
+            self._dry = True
+            self._wet = False
+            self._water_needed = True
+            self.is_active = True
+        elif self.current_value <= self._grounded_threashold:
+            self._dry = False
+            self._wet = False
+            self._water_needed = False
+            self.is_active = False
+        elif self.current_value <= self._wet_threashold:
+            self._dry = False
+            self._wet = True
+            self._water_needed = False
+            self.is_active = True
+        elif self.current_value < self._dry_threshold and\
+                self.current_value > self._wet_threashold:
+            self._dry = False
+            self._wet = False
+            self._water_needed = True
+            self.is_active = True
+        
 
 class SensorHandler:
     def __init__(self):
@@ -215,15 +255,32 @@ class SensorHandler:
     def init_sensors(self):
         for i in range(0, MAXIMUM_DIGITAL_CHANNELS):
             read_value = get_voltage_from_mutex(i)
-
-        if read_value > 2.9:
-            current_sensor = self.sensors_dict[str(i)]
-            current_sensor.is_active = True
+            current_sensor = self.sensor_dict[str(i)]
+            current_sensor.update_current_value(read_value)
             self.sensor_dict[str(i)] = current_sensor
-            logger.info("Sensor Found in position: {}".format(i))
-        else:
-            logger.warning(
-                "Sensor not found in position: {}".format(i))
+
+            if self.sensor_dict[str(i)].is_active:
+                logger.info("Sensor Found in position: {}".format(i))
+            else:
+                logger.warning(
+                    "Sensor not found in position: {}".format(i))
+    
+    def update_sensor_values(self):
+        for i in range(0, MAXIMUM_DIGITAL_CHANNELS):
+            read_value = get_voltage_from_mutex(i)
+            current_sensor = self.sensor_dict[str(i)]
+            if not current_sensor.is_active and\
+                    read_value > current_sensor._grounded_threashold:
+                logger.info("Activated new sensor: {}".format(i))
+            current_sensor.is_active = True
+            current_sensor.update_current_value(read_value)
+            self.sensor_dict[str(i)] = current_sensor
+
+    def is_dry(self, entry: str):
+        return self.sensor_dict[entry].is_dry()
+    
+    def is_wet(self, entry: str):
+        return self.sensor_dict[entry].is_wet()
 
 
 ###############################################################################
@@ -316,22 +373,22 @@ class SimpleLogger:
 SYS_UPDATE_PERIOD = 5
 
 # #######   MUX RELATED VARIABLES
-multiplex_selector = [(0 0, 0, 0),
-                      (1 0, 0, 0),
-                      (0 1, 0, 0),
-                      (1 1, 0, 0),
-                      (0 0, 1, 0),
-                      (1 0, 1, 0),
-                      (0 1, 1, 0),
-                      (1 1, 1, 0),
-                      (0 0, 0, 1),
-                      (1 0, 0, 1),
-                      (0 1, 0, 1),
-                      (1 1, 0, 1),
-                      (0 0, 1, 1),
-                      (1 0, 1, 1),
-                      (0 1, 1, 1),
-                      (1 1, 1, 1)]
+multiplex_selector = [(0, 0, 0, 0),
+                      (1, 0, 0, 0),
+                      (0, 1, 0, 0),
+                      (1, 1, 0, 0),
+                      (0, 0, 1, 0),
+                      (1, 0, 1, 0),
+                      (0, 1, 1, 0),
+                      (1, 1, 1, 0),
+                      (0, 0, 0, 1),
+                      (1, 0, 0, 1),
+                      (0, 1, 0, 1),
+                      (1, 1, 0, 1),
+                      (0, 0, 1, 1),
+                      (1, 0, 1, 1),
+                      (0, 1, 1, 1),
+                      (1, 1, 1, 1)]
 
 # the multiplexer will be controlled by s0, s1, s2, s3 and the prefix "a_"
 #  will refer to the analog and "d_" will refer to the digital
@@ -375,11 +432,14 @@ CURRENT_TIME = TimeHandler()
 
 DAYS_UP2WATER = 6   # How frequently the relais should be activated to turn on the pumps
 
-logger = SimpleLogger(file_name="execution.log")
+logger = SimpleLogger()
 
 # ####### SENSOR HANDLER
 
-sensor_h = SensorHandler()
+sensors_handler = SensorHandler()
+
+# DEBUG VARIABLE FOR MAIN ENTRY TO JUST RUN THE INIT WITHOUT ANY LOOP
+EXECUTE = True
 
 ###############################################################################
 #                               FUNCTIONS
@@ -418,12 +478,15 @@ def init():
     init_mux_digital()
     init_global_variables()
     switch_off_all_relais()
-    sensor_h.init_sensors()
+
+
+def init_sensor():
+    sensors_handler.init_sensors()
 
 
 def relais_setter(channel: int, signal: bool):
     global d_s0, d_s1, d_s2, d_s3
-
+    logger.info("Pump: {} set to: {}".format(channel, signal))
     if channel < 16:
         d_s0.value(multiplex_selector[channel][0])
         d_s1.value(multiplex_selector[channel][1])
@@ -474,42 +537,34 @@ def read_u16(adc_read: int):
 
 
 init()
+init_sensor()
 
-sem = 0
+
+def main():
+    CURRENT_TIME.initialize(utime.localtime())
+    sensors_handler.update_sensor_values()
+
+    # if CURRENT_TIME.is_daytime():
+    if EXECUTE:
+        for entry in sensors_handler.sensor_dict:
+            if sensors_handler.sensor_dict[entry].is_active:
+                logger.debug("Sensor {} detected active".format(entry))
+
+                if sensors_handler.is_dry(entry):
+                    logger.info("Sensor: {} is dry".format(entry))
+            elif not sensors_handler.sensor_dict[entry].is_active:
+                logger.info("Sensor: {} Not active".format(entry))
+
+        for plant in range(0, MAXIMUM_DIGITAL_CHANNELS):
+            if sensors_handler.is_dry(str(plant)):
+                relais_setter(plant, True)
+                utime.sleep(5)
+            else:
+                logger.debug("Skipping: {}".format(plant))
+    else:
+        pass
+    utime.sleep(2)
+
 
 while True:
-    CURRENT_TIME.initialize(utime.localtime())
-
-    if CURRENT_TIME.is_daytime():
-
-        if is_water_sensor_present():
-
-            if is_plant_dry():
-                pass
-                # activate the pumps
-            else:
-                pass
-                # log plants still wet
-        else:
-            START_TIME.is_passed_max_hours(CURRENT_TIME, DAYS_UP2WATER)
-            # activate the pumps
-
-
-    # #TODO to be substituted with one day check
-    # if START_TIME.is_passed_max_hours(CURRENT_TIME, DAYS_UP2WATER):
-    # #if True:
-    #     print("Running")
-
-    #     for loop in range(0, IRRIGATION_LOOPS):
-    #         logger.debug("Irrigation loop: {}".format(loop))
-    #         for channel in range(0, MAXIMUM_DIGITAL_CHANNELS):
-    #             logger.info("Activated relay {}. Water will be active for: {}".format(channel, IRRIGATION_TIMER))
-    #             relais_setter(channel, True)
-    #             utime.sleep(IRRIGATION_TIMER)
-    #         switch_off_all_relais()
-
-    #     reset_start_time()
-
-    # else:
-    #     utime.sleep(SYS_UPDATE_PERIOD)
-
+    main()
