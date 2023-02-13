@@ -14,6 +14,11 @@ class Sensor:
         self.percentage: int = 0
         self.average_buffer = []
         self.current_value: int = 0
+
+        self.DRY_THRESHOLD_PERC = 88
+        self.GROUNDED_THRESHOLD_PERC = 1
+        self.MEASURING_MIN_PERC = 40
+        self.MEASURING_MAX_PERC = 88
     
     def get_average(self):
         sum = 0
@@ -48,27 +53,27 @@ class Sensor:
         self.update_percentage()
 
     def get_info(self):
-        if self.percentage >= 90:
+        if self.percentage >= self.DRY_THRESHOLD_PERC:
             return "MIN: {}, MAX: {}, AVERAGE: {}, %: {}, READ: {} -->" \
             " Dry or sensor out of water.".format(self.min,
                                                   self.max,
                                                   self.average,
                                                   self.percentage,
                                                   self.current_value)
-        elif self.current_value < 1:
+        elif self.current_value < self.GROUNDED_THRESHOLD_PERC:
             return "MIN: {}, MAX: {}, AVERAGE: {}, %: {}, READ: {} -->" \
             " Grounded sensor".format(self.min,
                                       self.max,
                                       self.average,
                                       self.percentage,
                                       self.current_value)
-        elif self.percentage > 40 and self.percentage < 90:
+        elif self.percentage > self.MEASURING_MIN_PERC and self.percentage < self.MEASURING_MAX_PERC:
             return "MIN: {}, MAX: {}, AVERAGE: {}, %: {}, READ: {} -->" \
-            " [?] Not connected on measuring".format(self.min,
-                                                     self.max,
-                                                     self.average,
-                                                     self.percentage,
-                                                     self.current_value)
+            " [?] Measuring or not connected.".format(self.min,
+                                                      self.max,
+                                                      self.average,
+                                                      self.percentage,
+                                                      self.current_value)
         else:
             return "MIN: {}, MAX: {}, AVERAGE: {}, %: {}, READ: {} -->" \
             " [?] Check".format(self.min,
