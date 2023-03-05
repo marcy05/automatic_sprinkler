@@ -38,9 +38,15 @@ def sync_time():
 def mqtt_connect():
     print("Connecting to MQTT server...")
     client = MQTTClient(client_id, mqtt_server, user=user_t, password=password_t, keepalive=60)
+    client.set_callback(sub_cb)
     client.connect()
-    print('Connected to %s MQTT Broker'%(mqtt_server))
+    print("Connected")
     return client
+
+def sub_cb(topic, msg):
+    print("New message on topic {}".format(topic.decode('utf-8')))
+    msg = msg.decode('utf-8')
+    print(msg)
 
 try:
     connect()
@@ -50,9 +56,17 @@ try:
 
     client = mqtt_connect()
     for i in range(10):
+        print("Sending MQTT message")
         topic = "hello"
         message = {"Test": True}
         client.publish(topic, msg="{}".format(str(message)))
+        sleep(2)
+    
+
+    for i in range(1000):
+        print("Listening... {}".format(i))
+        client.subscribe("Time")
+        sleep(1)
     
 except KeyboardInterrupt:
     machine.reset()
