@@ -5,13 +5,15 @@ import machine
 import time
 import ntptime
 from umqttsimple import MQTTClient
+from secret import secret
+import utime
 
-ssid = ""
-password = ""
-mqtt_server = ""
-client_id = ""
-user_t = ""
-password_t = ""
+ssid = secret["ssid"]
+password = secret["password"]
+mqtt_server = secret["mqtt_server"]
+client_id = secret["client_id"]
+user_t = secret["user_t"]
+password_t = secret["password_t"]
 
 current_time = time.localtime()
 wlan = network.WLAN(network.STA_IF)
@@ -25,14 +27,27 @@ def connect():
         print('Waiting for connection...')
         sleep(1)
 
+def add_offset(offset: int = 0):
+    # Function introduced waiting for pull request https://github.com/micropython/micropython-lib/pull/635
+    current_time = utime.time()
+    changed_time = current_time + offset*60*60
+    # Returns (year, month, mday, hour, minute, second, weekday, yearday)
+    new_time = utime.gmtime(changed_time)
+    print("Changing to: {}".format(new_time))
+
+    # Accpets (year, month, day, weekday, hours, minutes, seconds, subseconds)
+    machine.RTC().datetime((new_time[0], new_time[1], new_time[2], new_time[6] + 1, new_time[3], new_time[4], new_time[5], 0))
+
+
 def sync_time():
     global current_time
     if wlan.isconnected():
-        ROME_OFFSET = 1*60*60
-        ntptime.settime()
+
+        # ntptime.settime() # waiting for https://github.com/micropython/micropython-lib/pull/635
+        h_shift = 1  # UTC+1
+        add_offset(h_shift)
         
-        current_time = time.localtime(time.time()+ROME_OFFSET)
-        print("New time: {}".format(current_time))
+        print("New time: {}".format(time.localtime()))
 
 
 def mqtt_connect():
@@ -52,7 +67,7 @@ try:
     connect()
     print("Current time: {}".format(time.localtime()))
     sync_time()
-    print("Current time: {}".format(time.time()+60*60))
+    print("Current time: {}".format(time.localtime()))
 
     client = mqtt_connect()
     for i in range(10):
