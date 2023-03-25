@@ -186,6 +186,7 @@ class HwInterface:
         self.d_s3.value(self.multiplex_selector[channel][3])
         self.d_sig.value(signal)
 
+
 class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
