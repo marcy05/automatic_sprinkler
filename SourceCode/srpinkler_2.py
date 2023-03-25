@@ -186,6 +186,20 @@ class HwInterface:
         self.d_s3.value(self.multiplex_selector[channel][3])
         self.d_sig.value(signal)
 
+    def _read_u16(self, adc_read: int):
+        """
+        Convert the Vdigit to Volt value from ADC.
+        """
+        return adc_read * 3.3 / 65535
+
+    def get_analog_from_mux(self, channel: int):
+        logger.debug("HwInterface - Channel: {} reading...".format(channel))
+        self.a_s0.value(self.multiplex_selector[channel][0])
+        self.a_s1.value(self.multiplex_selector[channel][1])
+        self.a_s2.value(self.multiplex_selector[channel][2])
+        self.a_s3.value(self.multiplex_selector[channel][3])
+        volt = self._read_u16(self.a_sig.read_u16())
+        return volt
 
 class Pump:
     def __init__(self, pump_id: int) -> None:
@@ -199,6 +213,28 @@ class Pump:
         hw_interface.set_channel_value(self.pump_id, signal)
 
 
+class Sensor:
+    def __init__(self, sensor_id: int) -> None:
+        self.sensor_id = sensor_id
+        self.status = False
+        self.active_threshold = 0.1
+
+        self._check_activation()
+
+    def _check_activation(self):
+        hw_interface = HwInterface()
+        sensor_value = hw_interface.get_analog_from_mux(self.sensor_id)
+        self.status = True if sensor_value >= self.active_threshold else False
+
+    def get_voltage(self):
+        if self.status:
+            hw_interface = HwInterface()
+            sensor_value = hw_interface.get_analog_from_mux(self.sensor_id)
+            return sensor_value
+        else:
+            return 0
+
+
 class Garden:
     def __init__(self) -> None:
         logger.debug("Init Gerden...")
@@ -206,10 +242,11 @@ class Garden:
         self.last_execution_time = utime.time()
         self.last_logging_time = utime.time()
 
-        self.exec_update_interval = 30  # Time in seconds
+        self.exec_update_interval = 10  # Time in seconds
         self.log_update_interval = 20  # Time in seconds
 
         self.pumps = [Pump(i) for i in range(7)]
+        self.sensors = [Sensor(i) for i in range(7)]
 
         logger.debug("Init completed.")
 
@@ -237,6 +274,11 @@ class Garden:
 
         if self._is_running_update_time_expired():
             self.pumps[0].set_pump_value(True)
+
+            for i in range(len(self.sensors)):
+                logger.debug("Sensor: {} -> Voltage: {}".format(i,
+                                                                self.sensors[i].get_voltage()))
+                #self.sensors[i].get_voltage()
 
         if self._is_logging_update_time_expired():
             logger.debug("Running garden")
