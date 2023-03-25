@@ -218,4 +218,32 @@ def main3():
         utime.sleep(.3)
 
 
-main()
+def main4():
+    """
+    Read one sensor for watering sensor calibration
+    """
+    TESTED_SENSOR = 0
+
+    counter = 0
+
+    sensor_dic = {}
+
+    while True:
+        for i in range(0, MAXIMUM_DIGITAL_CHANNELS):
+            if str(i) not in sensor_dic:
+                temp = Sensor()
+                temp.add_sensor_values(get_analog_read(i))
+                sensor_dic[str(i)] = temp
+            else:
+                sensor_dic[str(i)].add_sensor_values(get_analog_read(i))
+            utime.sleep(.1)
+
+        print("Run: {}".format(counter))
+
+        print("S{}: {}".format(str(TESTED_SENSOR), sensor_dic[str(TESTED_SENSOR)].get_info()))
+
+        counter += 1
+        utime.sleep(.5)
+
+
+main4()

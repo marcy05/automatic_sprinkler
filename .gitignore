@@ -1,7 +1,8 @@
 # Folders
-
+**/my_secret.py
 .vscode
 
 # Files
+SourceCode/Scripts/secret.py
 
-
+SourceCode/Scripts/pass_applier_remover.py

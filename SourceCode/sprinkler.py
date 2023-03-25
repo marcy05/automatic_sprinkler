@@ -441,6 +441,21 @@ sensors_handler = SensorHandler()
 # DEBUG VARIABLE FOR MAIN ENTRY TO JUST RUN THE INIT WITHOUT ANY LOOP
 EXECUTE = True
 
+# Print one semaphore
+sem_print_one = True
+
+# Watering duration
+
+PUMP_0_WATERING_DURATION = 3
+PUMP_1_WATERING_DURATION = 5
+PUMP_2_WATERING_DURATION = 7
+PUMP_3_WATERING_DURATION = 3
+PUMP_4_WATERING_DURATION = 3
+PUMP_5_WATERING_DURATION = 3
+PUMP_6_WATERING_DURATION = 3
+
+WATERING_PAUSE = 30
+
 ###############################################################################
 #                               FUNCTIONS
 ###############################################################################
@@ -541,6 +556,7 @@ init_sensor()
 
 
 def main():
+    global sem_print_one
     CURRENT_TIME.initialize(utime.localtime())
     sensors_handler.update_sensor_values()
 
@@ -548,22 +564,51 @@ def main():
     if EXECUTE:
         for entry in sensors_handler.sensor_dict:
             if sensors_handler.sensor_dict[entry].is_active:
-                logger.debug("Sensor {} detected active".format(entry))
+                logger.debug("{}: Sensor {} detected active".format(main.__name__, entry))
 
                 if sensors_handler.is_dry(entry):
                     logger.info("Sensor: {} is dry".format(entry))
+
             elif not sensors_handler.sensor_dict[entry].is_active:
-                logger.info("Sensor: {} Not active".format(entry))
+                if sem_print_one:
+                    logger.info("Sensor: {} Not active".format(entry))
 
         for plant in range(0, MAXIMUM_DIGITAL_CHANNELS):
             if sensors_handler.is_dry(str(plant)):
                 relais_setter(plant, True)
-                utime.sleep(5)
+                if plant == 0:
+                    logger.debug("Wait for {}s".format(PUMP_0_WATERING_DURATION))
+                    utime.sleep(PUMP_0_WATERING_DURATION)
+                elif plant == 1:
+                    logger.debug("Wait for {}s".format(PUMP_1_WATERING_DURATION))
+                    utime.sleep(PUMP_1_WATERING_DURATION)
+                elif plant == 2:
+                    logger.debug("Wait for {}s".format(PUMP_2_WATERING_DURATION))
+                    utime.sleep(PUMP_2_WATERING_DURATION)
+                elif plant == 3:
+                    logger.debug("Wait for {}s".format(PUMP_3_WATERING_DURATION))
+                    utime.sleep(PUMP_3_WATERING_DURATION)
+                elif plant == 4:
+                    logger.debug("Wait for {}s".format(PUMP_4_WATERING_DURATION))
+                    utime.sleep(PUMP_4_WATERING_DURATION)
+                elif plant == 5:
+                    logger.debug("Wait for {}s".format(PUMP_5_WATERING_DURATION))
+                    utime.sleep(PUMP_5_WATERING_DURATION)
+                elif plant == 6:
+                    logger.debug("Wait for {}s".format(PUMP_6_WATERING_DURATION))
+                    utime.sleep(PUMP_6_WATERING_DURATION)
+                
+                relais_setter(plant, False)
             else:
-                logger.debug("Skipping: {}".format(plant))
+                if sem_print_one:
+                    logger.debug("Skipping: {}".format(plant))
+        
+        logger.debug("Pause for: {}".format(WATERING_PAUSE))
+        utime.sleep(WATERING_PAUSE)
     else:
         pass
     utime.sleep(2)
+    sem_print_one = False
 
 
 while True:
