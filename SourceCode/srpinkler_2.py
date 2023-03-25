@@ -201,6 +201,7 @@ class HwInterface:
         volt = self._read_u16(self.a_sig.read_u16())
         return volt
 
+
 class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
