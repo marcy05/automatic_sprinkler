@@ -278,7 +278,6 @@ class Garden:
             for i in range(len(self.sensors)):
                 logger.debug("Sensor: {} -> Voltage: {}".format(i,
                                                                 self.sensors[i].get_voltage()))
-                #self.sensors[i].get_voltage()
 
         if self._is_logging_update_time_expired():
             logger.debug("Running garden")
