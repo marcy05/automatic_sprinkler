@@ -134,6 +134,12 @@ class Garden:
 
         logger.debug("Init completed.")
 
+        self.backend = BackEndInterface()
+
+    def init_backend(self):
+        self.backend.connect()
+        self.backend.mqtt_connect()
+
     def _is_running_update_time_expired(self):
         if (utime.time() - self.last_execution_time) >= \
                 self.exec_update_interval:
@@ -158,9 +164,9 @@ class Garden:
 # #############################################################################
 logger = SimpleLogger()
 my_garden = Garden()
-backend = BackEndInterface()
-backend.connect()
-backend.mqtt_connect()
+my_garden.init_backend()
+
+
 
 # #############################################################################
 #                               MAIN LOOP
