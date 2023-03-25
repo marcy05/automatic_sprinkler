@@ -1,6 +1,7 @@
 import utime
 import network
 from my_secret import secret
+from umqttsimple import MQTTClient
 
 # #############################################################################
 #                               CLASSES
@@ -62,6 +63,7 @@ class BackEndInterface:
         self.client_id = ""
         self.user_raspberry = ""
         self.pass_rasberry = ""
+        self.mqtt_client = MQTTClient
 
         self.wlan = network.WLAN(network.STA_IF)
 
@@ -85,7 +87,7 @@ class BackEndInterface:
         except:
             logger.error("Not possible to find secret file.")
             return False
-        
+
     def connect(self):
         logger.debug("Connecting...")
         self.wlan.active(True)
@@ -100,6 +102,23 @@ class BackEndInterface:
                 break
         if not self.wlan.isconnected():
             logger.error("Not possible to connect to internet.")
+
+    def sub_cb(topic, msg):
+        logger.debug("New message on topic {}".format(topic.decode('utf-8')))
+        msg = msg.decode('utf-8')
+        logger.debug(msg)
+
+    def mqtt_connect(self):
+        logger.debug("Connecting to MQTT broker...")
+        self.mqtt_client = MQTTClient(self.client_id,
+                                      self.mqtt_server_ip,
+                                      user=self.user_raspberry,
+                                      password=self.pass_rasberry,
+                                      keepalive=60)
+        self.mqtt_client.set_callback(self.sub_cb)
+        self.mqtt_client.connect()
+
+        logger.debug("Connected to MQTT.")
 
 
 
@@ -141,6 +160,7 @@ logger = SimpleLogger()
 my_garden = Garden()
 backend = BackEndInterface()
 backend.connect()
+backend.mqtt_connect()
 
 # #############################################################################
 #                               MAIN LOOP
