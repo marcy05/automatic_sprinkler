@@ -2,7 +2,7 @@ import utime
 import network
 import machine
 from my_secret import secret
-from umqttsimple import MQTTClient
+from umqtt.simple import MQTTClient
 
 # #############################################################################
 #                               CLASSES
@@ -65,6 +65,7 @@ class BackEndInterface:
         self.user_raspberry = ""
         self.pass_rasberry = ""
         self.mqtt_client = MQTTClient
+        self.subscribed_tipic = "garden"
 
         self.wlan = network.WLAN(network.STA_IF)
 
@@ -104,7 +105,7 @@ class BackEndInterface:
         if not self.wlan.isconnected():
             logger.error("Not possible to connect to internet.")
 
-    def sub_cb(topic, msg):
+    def sub_cb(self, topic, msg):
         logger.debug("New message on topic {}".format(topic.decode('utf-8')))
         msg = msg.decode('utf-8')
         logger.debug(msg)
@@ -118,8 +119,14 @@ class BackEndInterface:
                                       keepalive=60)
         self.mqtt_client.set_callback(self.sub_cb)
         self.mqtt_client.connect()
+        self.mqtt_client.subscribe(self.subscribed_tipic)
 
         logger.debug("Connected to MQTT.")
+
+    def publish_to_topic(self, topic: str, msg: str):
+        logger.debug("Publishing message...")
+        self.mqtt_client.publish(topic, msg)
+        logger.debug("Done")
 
 
 class HwInterface:
@@ -243,8 +250,8 @@ class Garden:
         self.last_execution_time = utime.time()
         self.last_logging_time = utime.time()
 
-        self.exec_update_interval = 10  # Time in seconds
-        self.log_update_interval = 20  # Time in seconds
+        self.exec_update_interval = 50  # Time in seconds
+        self.log_update_interval = 5  # Time in seconds
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
@@ -274,14 +281,17 @@ class Garden:
     def run(self):
 
         if self._is_running_update_time_expired():
-            self.pumps[0].set_pump_value(True)
-
+            #self.pumps[0].set_pump_value(True)
+            
             for i in range(len(self.sensors)):
                 logger.debug("Sensor: {} -> Voltage: {}".format(i,
                                                                 self.sensors[i].get_voltage()))
+                
+            my_garden.backend.publish_to_topic("garden/sprinkler", "New data to transmit")
 
         if self._is_logging_update_time_expired():
             logger.debug("Running garden")
+            my_garden.backend.mqtt_client.check_msg()
 
 
 # #############################################################################
