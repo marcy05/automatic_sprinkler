@@ -256,8 +256,8 @@ class Garden:
         self.last_execution_time = utime.time()
         self.last_logging_time = utime.time()
 
-        self.exec_update_interval = 50  # Time in seconds
-        self.log_update_interval = 5  # Time in seconds
+        self.exec_update_interval = 5  # Time in seconds
+        self.log_update_interval = 50  # Time in seconds
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
