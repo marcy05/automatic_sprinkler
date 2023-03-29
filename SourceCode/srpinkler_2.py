@@ -65,6 +65,7 @@ class BackEndInterface:
         self.user_raspberry = ""
         self.pass_rasberry = ""
         self.mqtt_client = MQTTClient
+        self.mqtt_status = False
         self.subscribed_tipic = "garden"
 
         self.wlan = network.WLAN(network.STA_IF)
@@ -112,21 +113,26 @@ class BackEndInterface:
 
     def mqtt_connect(self):
         logger.debug("Connecting to MQTT broker...")
-        self.mqtt_client = MQTTClient(self.client_id,
-                                      self.mqtt_server_ip,
-                                      user=self.user_raspberry,
-                                      password=self.pass_rasberry,
-                                      keepalive=60)
-        self.mqtt_client.set_callback(self.sub_cb)
-        self.mqtt_client.connect()
-        self.mqtt_client.subscribe(self.subscribed_tipic)
+        try:
+            self.mqtt_client = MQTTClient(self.client_id,
+                                        self.mqtt_server_ip,
+                                        user=self.user_raspberry,
+                                        password=self.pass_rasberry,
+                                        keepalive=60)
+            self.mqtt_client.set_callback(self.sub_cb)
+            self.mqtt_client.connect()
+            self.mqtt_status = True
+            self.mqtt_client.subscribe(self.subscribed_tipic)
+        except:
+            logger.warning("Not possible to connect to MQTT!")
 
         logger.debug("Connected to MQTT.")
 
     def publish_to_topic(self, topic: str, msg: str):
-        logger.debug("Publishing message...")
-        self.mqtt_client.publish(topic, msg)
-        logger.debug("Done")
+        if self.mqtt_status:
+            logger.debug("Publishing message...")
+            self.mqtt_client.publish(topic, msg)
+            logger.debug("Done")
 
 
 class HwInterface:
@@ -291,7 +297,10 @@ class Garden:
 
         if self._is_logging_update_time_expired():
             logger.debug("Running garden")
-            my_garden.backend.mqtt_client.check_msg()
+            if my_garden.backend.mqtt_status:
+                my_garden.backend.mqtt_client.check_msg()
+            else:
+                logger.debug("Skipping mqtt, not connected")
 
 
 # #############################################################################
