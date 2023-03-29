@@ -287,7 +287,7 @@ class Garden:
     def run(self):
 
         if self._is_running_update_time_expired():
-            #self.pumps[0].set_pump_value(True)
+            self.pumps[0].set_pump_value(True)
             
             for i in range(len(self.sensors)):
                 logger.debug("Sensor: {} -> Voltage: {}".format(i,
@@ -316,5 +316,6 @@ HwInterface().reset_digital_mux()
 #                               MAIN LOOP
 # #############################################################################
 
+logger.debug("Entering main loop ->")
 while True:
     my_garden.run()
