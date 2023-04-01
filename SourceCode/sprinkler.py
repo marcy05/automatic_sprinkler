@@ -92,7 +92,7 @@ class BackEndInterface:
         except:
             logger.error("Not possible to find secret file.")
             return False
-        
+
     def init(self):
         self.connect()
         self.set_correct_time()
@@ -122,10 +122,10 @@ class BackEndInterface:
         logger.debug("Connecting to MQTT broker...")
         try:
             self.mqtt_client = MQTTClient(self.client_id,
-                                        self.mqtt_server_ip,
-                                        user=self.user_raspberry,
-                                        password=self.pass_rasberry,
-                                        keepalive=60)
+                                          self.mqtt_server_ip,
+                                          user=self.user_raspberry,
+                                          password=self.pass_rasberry,
+                                          keepalive=60)
             self.mqtt_client.set_callback(self.sub_cb)
             self.mqtt_client.connect()
             self.mqtt_status = True
@@ -133,7 +133,6 @@ class BackEndInterface:
             logger.debug("Connected to MQTT.")
         except:
             logger.warning("Not possible to connect to MQTT!")
-
 
     def publish_to_topic(self, topic: str, msg: str):
         if self.mqtt_status:
@@ -300,11 +299,10 @@ class Garden:
 
         if self._is_running_update_time_expired():
             self.pumps[0].set_pump_value(True)
-            
+
             for i in range(len(self.sensors)):
-                logger.debug("Sensor: {} -> Voltage: {}".format(i,
-                                                                self.sensors[i].get_voltage()))
-                
+                logger.debug("Sensor: {} -> Voltage: {}".format(i, self.sensors[i].get_voltage()))
+
             my_garden.backend.publish_to_topic("garden/sprinkler", "New data to transmit")
 
         if self._is_logging_update_time_expired():
