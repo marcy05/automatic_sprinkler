@@ -92,6 +92,11 @@ class BackEndInterface:
         except:
             logger.error("Not possible to find secret file.")
             return False
+        
+    def init(self):
+        self.connect()
+        self.set_correct_time()
+        self.mqtt_connect()
 
     def connect(self):
         logger.debug("Connecting...")
@@ -277,11 +282,6 @@ class Garden:
 
         self.backend = BackEndInterface()
 
-    def init_backend(self):
-        self.backend.connect()
-        self.backend.mqtt_connect()
-        self.backend.set_correct_time()
-
     def _is_running_update_time_expired(self):
         if (utime.time() - self.last_execution_time) >= \
                 self.exec_update_interval:
@@ -323,7 +323,7 @@ logger = SimpleLogger()
 HwInterface().reset_digital_mux()
 
 my_garden = Garden()
-my_garden.init_backend()
+my_garden.backend.init()
 
 
 # #############################################################################
