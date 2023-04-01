@@ -4,7 +4,7 @@ from time import sleep
 import machine
 import time
 import ntptime
-from umqttsimple import MQTTClient
+from umqtt.simple import MQTTClient
 from secret import secret
 import utime
 
