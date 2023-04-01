@@ -1,6 +1,7 @@
 # Folders
 **/my_secret.py
 .vscode
+*.bat
 
 # Files
 SourceCode/Scripts/secret.py

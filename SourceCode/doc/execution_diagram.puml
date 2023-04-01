@@ -1,0 +1,37 @@
+@startuml
+
+title Automatic sprinkler flow chart
+
+start
+:Init logger;
+:Create a garder
+    This initialize:
+        All timers,
+        7 Pumps,
+        7 Sensors,
+        Backend objects for MQTT and NTP;
+
+:All relays are switched off;
+
+while (main loop) is (yes)
+    repeat :Test execution update interval;
+        if (is exec_update_interval >= 5) then (yes)
+            :activate pump 0;
+            :read all sensors value;
+            :push new data via MQTT if available;
+        endif
+    repeat while (loop) 
+    
+    repeat :Test backend update interval;
+        if (is log_update_interval >= 50) then (yes)
+            :check for new messages from MQTT;
+        endif
+    repeat while (loop)
+
+end while
+-> no;
+:crash;
+
+stop
+
+@enduml
