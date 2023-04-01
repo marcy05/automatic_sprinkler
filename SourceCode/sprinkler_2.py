@@ -1,8 +1,10 @@
 import utime
 import network
 import machine
+import time
 from my_secret import secret
 from umqtt.simple import MQTTClient
+import my_ntp
 
 # #############################################################################
 #                               CLASSES
@@ -123,16 +125,25 @@ class BackEndInterface:
             self.mqtt_client.connect()
             self.mqtt_status = True
             self.mqtt_client.subscribe(self.subscribed_tipic)
+            logger.debug("Connected to MQTT.")
         except:
             logger.warning("Not possible to connect to MQTT!")
 
-        logger.debug("Connected to MQTT.")
 
     def publish_to_topic(self, topic: str, msg: str):
         if self.mqtt_status:
             logger.debug("Publishing message...")
             self.mqtt_client.publish(topic, msg)
             logger.debug("Done")
+
+    def set_correct_time(self):
+        if self.wlan.isconnected():
+            try:
+                TIME_SHIFT = 2
+                my_ntp.settime(TIME_SHIFT)
+                logger.debug("NTP time set: {}".format(time.localtime()))
+            except:
+                logger.warning("Not possible to set global time")
 
 
 class HwInterface:
@@ -269,6 +280,7 @@ class Garden:
     def init_backend(self):
         self.backend.connect()
         self.backend.mqtt_connect()
+        self.backend.set_correct_time()
 
     def _is_running_update_time_expired(self):
         if (utime.time() - self.last_execution_time) >= \
@@ -307,10 +319,12 @@ class Garden:
 #                               GLOBAL VARIABLES
 # #############################################################################
 logger = SimpleLogger()
+
+HwInterface().reset_digital_mux()
+
 my_garden = Garden()
 my_garden.init_backend()
 
-HwInterface().reset_digital_mux()
 
 # #############################################################################
 #                               MAIN LOOP
