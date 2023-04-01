@@ -96,7 +96,7 @@ class BackEndInterface:
     def init(self):
         self.connect()
         self.set_correct_time()
-        self.mqtt_connect()
+        # self.mqtt_connect()  # TODO uncomment for MQTT iteraction
 
     def connect(self):
         logger.debug("Connecting...")
@@ -234,6 +234,7 @@ class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
         self.status = True
+        self.activation_period = 2  # Value in seconds
 
     def set_pump_value(self, signal: bool):
         logger.debug("Pump: {}, setting value: {}".format(self.pump_id,
@@ -241,12 +242,18 @@ class Pump:
         hw_interface = HwInterface()
         hw_interface.set_channel_value(self.pump_id, signal)
 
+    def watering(self):
+        self.set_pump_value(True)
+        utime.sleep(self.activation_period)
+        self.set_pump_value(False)
+
 
 class Sensor:
     def __init__(self, sensor_id: int) -> None:
         self.sensor_id = sensor_id
         self.status = True
         self.active_threshold = 0.1
+        self.current_value = 0.0
 
         self._check_activation()
 
@@ -258,8 +265,8 @@ class Sensor:
     def get_voltage(self):
         if self.status:
             hw_interface = HwInterface()
-            sensor_value = hw_interface.get_analog_from_mux(self.sensor_id)
-            return sensor_value
+            self.current_value = hw_interface.get_analog_from_mux(self.sensor_id)
+            return self.current_value
         else:
             return 0
 
@@ -271,8 +278,21 @@ class Garden:
         self.last_execution_time = utime.time()
         self.last_logging_time = utime.time()
 
-        self.exec_update_interval = 5  # Time in seconds
-        self.log_update_interval = 50  # Time in seconds
+        self.watering_timer = utime.time()
+        self.watering_period = 1 * 24 * 60 * 60  # Days
+        self.watering_period = 50  # TODO erase this for real application
+        self.watering_iterations = 3
+        self.watering_itersations_delay = 10  # seconds of delays between one watering action and another.
+
+        self.back_sync_timer = utime.time()
+        self.back_sync_period = 60 * 60  # Period of time for backend sync
+
+        self.sensor_reading_timer = utime.time()
+        self.sensor_reading_period = 20 * 60  # Sensor reading period
+        self.sensor_reading_period = 10  # TODO erase this for real application
+
+        #self.exec_update_interval = 5  # Time in seconds
+        #self.log_update_interval = 50  # Time in seconds
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
@@ -295,22 +315,57 @@ class Garden:
             return True
         return False
 
+    def is_watering_moment(self):
+        if (utime.time() - self.watering_timer) >= self.watering_period:
+            logger.debug("Watering moment: True")
+            return True
+        return False
+
+    def pump_cycle(self):
+        for iteration in range(self.watering_iterations):
+            logger.debug("Watering iteration: {}/{}".format(iteration+1, self.watering_iterations))
+            for pump in self.pumps:
+                if pump.status:
+                    pump.watering()
+            utime.sleep(self.watering_itersations_delay)
+
+    def is_backend_sync_moment(self):
+        if (utime.time() - self.back_sync_timer) >= self.back_sync_period:
+            logger.debug("Backend sync time")
+            return True
+        return False
+
+    def send_data_to_back(self):
+        # collect pums status
+        # collect sensor status
+        # collect sensor data
+        # send data via mqtt
+        pass
+
+    def is_sensor_reading_moment(self):
+        if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
+            logger.debug("Sensor reading moment")
+            return True
+        return False
+
+    def reading_sensors(self):
+        for i in range(len(self.sensors)):
+            sensor_value = self.sensors[i].get_voltage()
+            logger.debug("Sensor: {} -> Voltage: {}".format(i, sensor_value))
+
     def run(self):
 
-        if self._is_running_update_time_expired():
-            self.pumps[0].set_pump_value(True)
+        if self.is_watering_moment():
+            self.pump_cycle()
+            self.watering_timer = utime.time()
 
-            for i in range(len(self.sensors)):
-                logger.debug("Sensor: {} -> Voltage: {}".format(i, self.sensors[i].get_voltage()))
+        if self.is_backend_sync_moment():
+            self.send_data_to_back()
+            self.back_sync_timer = utime.time()
 
-            my_garden.backend.publish_to_topic("garden/sprinkler", "New data to transmit")
-
-        if self._is_logging_update_time_expired():
-            logger.debug("Running garden")
-            if my_garden.backend.mqtt_status:
-                my_garden.backend.mqtt_client.check_msg()
-            else:
-                logger.debug("Skipping mqtt, not connected")
+        if self.is_sensor_reading_moment():
+            self.reading_sensors()
+            self.sensor_reading_timer = utime.time()
 
 
 # #############################################################################
