@@ -214,13 +214,13 @@ class HwInterface:
         self.d_s3.value(self.multiplex_selector[channel][3])
         self.d_sig.value(signal)
 
-    def _read_u16(self, adc_read: int):
+    def _read_u16(self, adc_read: int) -> float:
         """
         Convert the Vdigit to Volt value from ADC.
         """
         return adc_read * 3.3 / 65535
 
-    def get_analog_from_mux(self, channel: int):
+    def get_analog_from_mux(self, channel: int) -> float:
         logger.debug("HwInterface - Channel: {} reading...".format(channel))
         self.a_s0.value(self.multiplex_selector[channel][0])
         self.a_s1.value(self.multiplex_selector[channel][1])
@@ -233,7 +233,7 @@ class HwInterface:
 class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
-        self.status = False
+        self.status = True
 
     def set_pump_value(self, signal: bool):
         logger.debug("Pump: {}, setting value: {}".format(self.pump_id,
@@ -245,7 +245,7 @@ class Pump:
 class Sensor:
     def __init__(self, sensor_id: int) -> None:
         self.sensor_id = sensor_id
-        self.status = False
+        self.status = True
         self.active_threshold = 0.1
 
         self._check_activation()
