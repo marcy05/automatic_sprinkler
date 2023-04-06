@@ -4,34 +4,47 @@ title Automatic sprinkler flow chart
 
 start
 :Init logger;
-:Create a garder
+:Reset all relays through HwInterface;
+:Create a Garder
     This initialize:
         All timers,
         7 Pumps,
         7 Sensors,
         Backend objects for MQTT and NTP;
 
-:All relays are switched off;
+:Try to have backend interaction
+    This will try to:
+        Connect to WiFi
+        Get the NTP time set for RTC
+        Connect to MQTT broker;
+
+:Set the current time for all Garden timers;
 
 while (main loop) is (yes)
-    repeat :Test execution update interval;
-        if (is exec_update_interval >= 5) then (yes)
-            :activate pump 0;
-            :read all sensors value;
-            :push new data via MQTT if available;
+
+    if (is watering timer expired) then (yes)
+        if (NTP time was synchronized) then (yes)
+            if (is evening time) then (yes)
+                :For each pump activate the pump with a predefined interval;
+            endif
         endif
-    repeat while (loop) 
-    
-    repeat :Test backend update interval;
-        if (is log_update_interval >= 50) then (yes)
-            :check for new messages from MQTT;
-        endif
-    repeat while (loop)
+    endif
+
+    if (is backend timer expired) then (yes)
+        :collect pumps status;
+        :collect sensor status;
+        :collect sensor data;
+        :send data via mqtt;
+    endif
+
+    if (is reading sensor timer expired) then (yes)
+        :read all sensor values;
+    endif
 
 end while
+
 -> no;
 :crash;
-
 stop
 
 @enduml
