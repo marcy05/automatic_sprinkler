@@ -60,8 +60,10 @@ class SimpleLogger:
 class BackEndInterface:
     def __init__(self) -> None:
         logger.debug("Init Backend interface")
+        self.network_status = False
         self.network_ssid = ""
         self.network_password = ""
+        self.ntp_sync_done = False
         self.mqtt_server_ip = ""
         self.client_id = ""
         self.user_raspberry = ""
@@ -109,6 +111,7 @@ class BackEndInterface:
                 utime.sleep(1)
             else:
                 logger.debug("Connected.")
+                self.network_status = True
                 break
         if not self.wlan.isconnected():
             logger.error("Not possible to connect to internet.")
@@ -141,13 +144,15 @@ class BackEndInterface:
             logger.debug("Done")
 
     def set_correct_time(self):
-        if self.wlan.isconnected():
-            try:
-                TIME_SHIFT = 2
-                my_ntp.settime(TIME_SHIFT)
-                logger.debug("NTP time set: {}".format(time.localtime()))
-            except:
-                logger.warning("Not possible to set global time")
+        if self.network_status:
+            if self.wlan.isconnected():
+                try:
+                    TIME_SHIFT = 2
+                    my_ntp.settime(TIME_SHIFT)
+                    self.ntp_sync_done = True
+                    logger.debug("NTP time set: {}".format(time.localtime()))
+                except:
+                    logger.warning("Not possible to set global time")
 
 
 class HwInterface:
@@ -301,6 +306,30 @@ class Garden:
 
         self.backend = BackEndInterface()
 
+    def init_timers(self):
+        # This functions allows to sync all timers after that the NTP sync 
+        #   has properly set the RTC time.
+        init_time = utime.time()
+        self.start_time = init_time
+        self.last_execution_time = init_time
+        self.last_logging_time = init_time
+        self.watering_timer = init_time
+        self.back_sync_timer = init_time
+        self.sensor_reading_timer = init_time
+
+    def _is_evening(self):
+        tm = utime.gmtime(utime.time())
+        month = tm[1]
+        hour = tm[3]
+        # Consider evening erlier in colder months
+        if (month >= 1 and month <= 5) or (month >= 10 and month <= 12):
+            if hour >= 18:
+                return True
+        # Consider evening late in hotter months
+        if month > 5 and month < 10:
+            if hour >= 19:
+                return True
+
     def _is_running_update_time_expired(self):
         if (utime.time() - self.last_execution_time) >= \
                 self.exec_update_interval:
@@ -317,8 +346,17 @@ class Garden:
 
     def is_watering_moment(self):
         if (utime.time() - self.watering_timer) >= self.watering_period:
-            logger.debug("Watering moment: True")
-            return True
+            logger.debug("Watering timeout expired")
+            if self.backend.ntp_sync_done:
+                logger.debug("NTP was sync")
+                if self._is_evening():
+                    logger.debug("Evening detected")
+                    return True
+                else:
+                    return False
+            else:
+                logger.debug("NTP not sync. Watering timeout expired.")
+                return True
         return False
 
     def pump_cycle(self):
@@ -377,6 +415,7 @@ HwInterface().reset_digital_mux()
 
 my_garden = Garden()
 my_garden.backend.init()
+my_garden.init_timers()
 
 
 # #############################################################################
