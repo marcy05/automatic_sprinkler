@@ -90,6 +90,38 @@ Step 5 - check that no errors on update and then install influxdb
 sudo apt update && sudo apt install -y influxdb
 ```
 
+## Create db and User
+
+Connect to influxdb
+
+```
+$ influx
+Connected to http://localhost:8086 version 1.8.10
+InfluxDB shell version: 1.8.10
+>
+```
+
+Create DB
+
+```
+> create database sprinklerdb
+> use sprinklerdb
+Using database sprinklerdb
+```
+
+Create user
+
+```
+> create user <user_name> with password 'password_to_be_used' with all privileges
+> grant all privileges on sprinklerdb to <user_name>
+```
+
+Show the user for confirmation
+
+```
+> show users
+```
+
 ### Troubleshooting - Missing locale during influxdb installation
 
 If during the influxdb installation you get:
