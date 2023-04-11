@@ -134,3 +134,31 @@ Step 3 - Generate again the locale
 $ sudo locale-gen
 ```
 
+## Install Grafana
+
+We need to add the Grafana packages to apt
+
+```
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+```
+
+We can now update and install the binaries
+
+```
+sudo apt update && sudo apt install -y grafana
+```
+
+Then simply enable the service and set to run at boot:
+
+```
+$ sudo systemctl unmask grafana-server.service
+$ sudo systemctl start grafana-server
+$ sudo systemctl enable grafana-server.service
+Synchronizing state of grafana-server.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable grafana-server
+Created symlink /etc/systemd/system/multi-user.target.wants/grafana-server.service → /lib/systemd/system/grafana-server.service.
+```
+
+Now we can check that grafana is up by loading it in a browser: http://\<ipaddress>:3000. If so, you can log in with the username and password = admin and set a new admin password.
+
