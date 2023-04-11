@@ -194,3 +194,18 @@ Created symlink /etc/systemd/system/multi-user.target.wants/grafana-server.servi
 
 Now we can check that grafana is up by loading it in a browser: http://\<ipaddress>:3000. If so, you can log in with the username and password = admin and set a new admin password.
 
+## Add InfluxDB as Data source
+
+Now we have both Influx and Grafana running, we can stitch them together. Log in to your Grafana instance and head to "Data Sources". Select "Add new Data Source" and find InfluxDB under "Timeseries Databases".
+
+As we are running both services on the same Pi, set the URL to localhost and use the default influx port of 8086:
+
+![Alt text](./picture/grafana_settings_1.png)
+
+We then need to add the database, user and password that we set earlier:
+
+![Alt text](./picture/grafana_settings_2.png)
+
+That's all we need! Now go ahead and hit "Save & Test" to connect everything together:
+
+![Alt text](./picture/grafana_settings_3.png)
