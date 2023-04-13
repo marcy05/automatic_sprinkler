@@ -209,3 +209,88 @@ We then need to add the database, user and password that we set earlier:
 That's all we need! Now go ahead and hit "Save & Test" to connect everything together:
 
 ![Alt text](./picture/grafana_settings_3.png)
+
+
+## Install Mosquitto MQTT Broker
+
+Install Mosquitto Broker
+```
+$ sudo apt install -y mosquitto mosquitto-clients
+```
+
+Make Mosquitto auto start at the boot
+
+```
+$ sudo systemctl enable mosquitto.service
+```
+
+It is possible to test the mosquitto execution via:
+
+```
+$ mosquitto -v
+1681414725: mosquitto version 2.0.11 starting
+1681414725: Using default config.
+1681414725: Starting in local only mode. Connections will only be possible from clients running on this machine.
+1681414725: Create a configuration file which defines a listener to allow remote access.
+1681414725: For more details see https://mosquitto.org/documentation/authentication-methods/
+1681414725: Opening ipv4 listen socket on port 1883.
+1681414725: Error: Address already in use
+1681414725: Opening ipv6 listen socket on port 1883.
+1681414725: Error: Address already in use
+```
+
+### Enable Remote Access with authentication
+
+```
+$ sudo mosquitto_passwd -c /etc/mosquitto/passwd YOUR_USERNAME
+```
+
+Enter the password when asked.
+
+This previous command creates a password file called passwd on the /etc/mosquitto directory.
+
+Edit the configuration file:
+
+```
+sudo nano /etc/mosquitto/mosquitto.conf
+```
+
+Add the following line at the top of the file (make sure it is at the top of the file, otherwise it won’t work):
+
+```
+per_listener_settings true
+```
+
+Add the following three lines to allow connection for authenticated users and tell Mosquitto where the username/password file is located
+
+```
+allow_anonymous false
+listener 1883
+password_file /etc/mosquitto/passwd
+```
+
+Restart Mosquitto for the changes to take effect.
+
+```
+sudo systemctl restart mosquitto
+```
+
+To check if Mosquitto is actually running, you can run the following command:
+
+```
+sudo systemctl status mosquitto
+```
+
+### Add More Users/Change Password
+
+To add more users to an existing password file, or to change the password for an existing user, leave out the -c argument:
+
+```
+mosquitto_passwd <password file> <username>
+```
+
+For example, if I want to change the password for the sara user and taking into account that the password file we created was called passwd, the command will be as follows:
+
+```
+sudo mosquitto_passwd /etc/mosquitto/passwd sara
+```
