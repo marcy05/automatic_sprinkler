@@ -37,6 +37,14 @@ $ sudo systemctl start influxdb
 $ sudo systemctl enable influxdb.service
 ```
 
+### Enable HTTP endpoing
+
+After the installation of InfluxDB we have to make one change in the configuration to enable the HTTP endpoint. This is necessary because we want to write data from the MQTT subscriber to an existing database. To change the configuration, use the following statement.
+
+In the configuration file scroll down with the arrow key on your keyboard to the [http] part of the configuration. Uncomment the first setting by deleting the # on “Determines whether HTTP endpoint is enabled.” and set the enabled = true. Click Ctrl + X, then Y to confirm to save and hit the enter button to save to the existing file.
+
+![Alt text](./picture/influx_http_enable.png)
+
 ### Troubleshooting - missing key
 
 In case an error occurs during the installation of influxdb due to the key like:
