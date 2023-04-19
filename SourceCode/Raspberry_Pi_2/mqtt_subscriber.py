@@ -12,17 +12,17 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-INFLUXDB_ADDRESS = '192.168.0.8'
-INFLUXDB_USER = 'mqtt'
-INFLUXDB_PASSWORD = 'mqtt'
-INFLUXDB_DATABASE = 'weather_stations'
+INFLUXDB_ADDRESS = ''
+INFLUXDB_USER = ''
+INFLUXDB_PASSWORD = ''
+INFLUXDB_DATABASE = ''
 
-MQTT_ADDRESS = '192.168.0.8'
-MQTT_USER = 'cdavid'
-MQTT_PASSWORD = 'cdavid'
-MQTT_TOPIC = 'home/+/+'
-MQTT_REGEX = 'home/([^/]+)/([^/]+)'
-MQTT_CLIENT_ID = 'MQTTInfluxDBBridge'
+MQTT_ADDRESS = ''
+MQTT_USER = ''
+MQTT_PASSWORD = ''
+MQTT_TOPIC = ''
+MQTT_REGEX = ''
+MQTT_CLIENT_ID = ''
 
 
 def load_credential():
