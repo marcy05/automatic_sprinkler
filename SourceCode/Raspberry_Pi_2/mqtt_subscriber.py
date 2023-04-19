@@ -1,8 +1,16 @@
 import re
+import sys
 import json
+import logging
 import paho.mqtt.client as mqtt
 from influxdb import InfluxDBClient
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 INFLUXDB_ADDRESS = '192.168.0.8'
 INFLUXDB_USER = 'mqtt'
@@ -35,22 +43,22 @@ def load_credential():
         MQTT_REGEX = fj["mqtt_regex"]
         MQTT_CLIENT_ID = fj["mqtt_client_id"]
 
-        print("debug: paramenters:\nINFLUXDB_ADDRESS = {}\n"
-              "INFLUXDB_USER = {}\n INFLUXDB_PASSWORD = {}\n"
-              "INFLUXDB_DATABASE = {}\n\n MQTT_ADDRESS = {}\n"
-              "MQTT_USER = {}\n MQTT_PASSWORD = {}\n"
-              "MQTT_TOPIC = {}\n"
-              "MQTT_REGEX = {}\n"
-              "MQTT_CLIENT_ID = {}".format(INFLUXDB_ADDRESS,
-                                           INFLUXDB_USER,
-                                           INFLUXDB_PASSWORD,
-                                           INFLUXDB_DATABASE,
-                                           MQTT_ADDRESS,
-                                           MQTT_USER,
-                                           MQTT_PASSWORD,
-                                           MQTT_TOPIC,
-                                           MQTT_REGEX,
-                                           MQTT_CLIENT_ID))
+        logger.debug("paramenters:\nINFLUXDB_ADDRESS = {}\n"
+              	     "INFLUXDB_USER = {}\n INFLUXDB_PASSWORD = {}\n"
+                     "INFLUXDB_DATABASE = {}\n\n MQTT_ADDRESS = {}\n"
+                     "MQTT_USER = {}\n MQTT_PASSWORD = {}\n"
+                     "MQTT_TOPIC = {}\n"
+                     "MQTT_REGEX = {}\n"
+                     "MQTT_CLIENT_ID = {}".format(INFLUXDB_ADDRESS,
+                                                  INFLUXDB_USER,
+                                                  INFLUXDB_PASSWORD,
+                                                  INFLUXDB_DATABASE,
+                                                  MQTT_ADDRESS,
+                                                  MQTT_USER,
+                                                  MQTT_PASSWORD,
+                                                  MQTT_TOPIC,
+                                                  MQTT_REGEX,
+                                                  MQTT_CLIENT_ID))
 
 
 load_credential()
@@ -61,11 +69,11 @@ influxdb_client = InfluxDBClient(
 def _init_indluxdb_database():
     database = influxdb_client.get_list_database()
     if len(list(filter(lambda x: x['name'] == INFLUXDB_DATABASE, database))) == 0:
-        print("Database not found, it will be created")
+        logger.debug("Database not found, it will be created")
         influxdb_client.create_database(INFLUXDB_DATABASE)
-        print("Database created")
+        logger.debug("Database created")
     influxdb_client.switch_database(INFLUXDB_DATABASE)
-    print("Database activated")
+    logger.info("Database activated")
 
 
 def main():
