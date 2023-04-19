@@ -76,9 +76,27 @@ def _init_indluxdb_database():
     logger.info("Database activated")
 
 
+def on_connect(client, userdata, flags, rc):
+    logger.debug("Server connection")
+    logger.info("Connected with result code: {}".format(str(rc)))
+    client.subscribe(MQTT_TOPIC)
+
+def on_message(client, userdata, msg):
+    logger.debug("Callback when a message is recevied on Server side")
+    logger.debug(msg.topic + " " + str(msg.payload))
+    logger.debug("Here the sensor data should be parsed")
+
 def main():
     _init_indluxdb_database()
+    
+    mqtt_client = mqtt.Client(MQTT_CLIENT_ID)
+    mqtt_client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
+    logger.debug("Connection done")
+    mqtt_client.on_connet = on_connect
+    mqtt_client.on_message = on_message
 
+    mqtt_client.connect(MQTT_ADDRESS, 1883)
+    mqtt_client.loop_forever()
 
 if __name__ == "__main__":
     main()
