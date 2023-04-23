@@ -83,7 +83,7 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     logger.debug("Callback when a message is recevied on Server side")
-    logger.debug(msg.topic + " " + str(msg.payload))
+    logger.debug(msg.topic + " " + str(msg.payload.decode('utf-8')))
     logger.debug("Here the sensor data should be parsed")
 
 def main():
