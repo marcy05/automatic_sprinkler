@@ -12,3 +12,5 @@ SourceCode/Scripts/pass_applier_remover.py
 SourceCode/doc/secret_rasp.txt
 
 SourceCode/Raspberry_Pi_2/secret.json
+
+SourceCode/Raspberry_Pi_2/test_run_mosquitto.sh
