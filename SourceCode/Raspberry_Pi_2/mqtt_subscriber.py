@@ -77,14 +77,25 @@ def _init_indluxdb_database():
 
 
 def on_connect(client, userdata, flags, rc):
-    logger.debug("Server connection")
-    logger.info("Connected with result code: {}".format(str(rc)))
-    client.subscribe(MQTT_TOPIC)
+    status={"0":"successful", "1":"refused-Incorrect protocol version", 
+            "2":"refused-Invalid client identifier", "3":"refused-server unavailable", 
+            "4":"refused-Bad User or Password", "5":"refused-Not authorised"}
+    logger.info("Connected with result code: {}".format(status[str(rc)]))
+
+def message_to_dict(mqtt_message):
+    msg_str = mqtt_message.decode("utf-8")
+    msg_str = msg_str.replace("'", '"')
+    msg_str = msg_str.replace("T", "t")
+    msg_str = msg_str.replace("F", "f")
+    dict_msg = json.loads(msg_str)
+    return dict_msg
 
 def on_message(client, userdata, msg):
-    logger.debug("Callback when a message is recevied on Server side")
-    logger.debug(msg.topic + " " + str(msg.payload.decode('utf-8')))
-    logger.debug("Here the sensor data should be parsed")
+    logger.debug("Received message...")
+    logger.debug("Topic:" + msg.topic + " Payload: " + str(msg.payload))
+    logger.debug("Parsing message...")
+    msg_dict = message_to_dict(msg.payload)
+    logger.debug("Received message: {}".format(msg_dict))
 
 def main():
     _init_indluxdb_database()
@@ -94,8 +105,9 @@ def main():
     logger.debug("Connection done")
     mqtt_client.on_connet = on_connect
     mqtt_client.on_message = on_message
-
     mqtt_client.connect(MQTT_ADDRESS, 1883)
+    # Only when connected you can correctly subscribe to topics
+    mqtt_client.subscribe(MQTT_TOPIC)
     mqtt_client.loop_forever()
 
 if __name__ == "__main__":
