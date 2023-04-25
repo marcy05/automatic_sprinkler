@@ -2,6 +2,7 @@
 **/my_secret.py
 .vscode
 *.bat
+*.save
 
 # Files
 SourceCode/Scripts/secret.py
