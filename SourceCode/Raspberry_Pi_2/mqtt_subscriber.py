@@ -90,12 +90,18 @@ def message_to_dict(mqtt_message):
     dict_msg = json.loads(msg_str)
     return dict_msg
 
+def _send_to_influx(data_dict: dict):
+    message_list = [data_dict]
+    influxdb_client.write_points(message_list)
+
 def on_message(client, userdata, msg):
     logger.debug("Received message...")
     logger.debug("Topic:" + msg.topic + " Payload: " + str(msg.payload))
     logger.debug("Parsing message...")
     msg_dict = message_to_dict(msg.payload)
     logger.debug("Received message: {}".format(msg_dict))
+    logger.debug("populate influxdn")
+    _send_to_influx(msg_dict)
 
 def main():
     _init_indluxdb_database()
