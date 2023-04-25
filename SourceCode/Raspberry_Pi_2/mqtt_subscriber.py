@@ -82,10 +82,20 @@ def on_connect(client, userdata, flags, rc):
             "4":"refused-Bad User or Password", "5":"refused-Not authorised"}
     logger.info("Connected with result code: {}".format(status[str(rc)]))
 
+def message_to_dict(mqtt_message):
+    msg_str = mqtt_message.decode("utf-8")
+    msg_str = msg_str.replace("'", '"')
+    msg_str = msg_str.replace("T", "t")
+    msg_str = msg_str.replace("F", "f")
+    dict_msg = json.loads(msg_str)
+    return dict_msg
+
 def on_message(client, userdata, msg):
     logger.debug("Received message...")
-    logger.debug(msg.topic + " " + str(msg.payload))
-    logger.debug("Here the sensor data should be parsed")
+    logger.debug("Topic:" + msg.topic + " Payload: " + str(msg.payload))
+    logger.debug("Parsing message...")
+    msg_dict = message_to_dict(msg.payload)
+    logger.debug("Received message: {}".format(msg_dict))
 
 def main():
     _init_indluxdb_database()
