@@ -66,8 +66,8 @@ class BackEndInterface:
         self.ntp_sync_done = False
         self.mqtt_server_ip = ""
         self.client_id = ""
-        self.user_raspberry = ""
-        self.pass_rasberry = ""
+        self.mqtt_user = ""
+        self.mqtt_password = ""
         self.mqtt_client = MQTTClient
         self.mqtt_status = False
         self.subscribed_tipic = "garden"
@@ -88,8 +88,8 @@ class BackEndInterface:
             self.network_password = secret["network_password"]
             self.mqtt_server_ip = secret["mqtt_server_ip"]
             self.client_id = secret["client_id"]
-            self.user_raspberry = secret["user_raspberry"]
-            self.pass_rasberry = secret["pass_rasberry"]
+            self.mqtt_user = secret["mqtt_user"]
+            self.mqtt_password = secret["mqtt_password"]
             return True
         except:
             logger.error("Not possible to find secret file.")
@@ -98,7 +98,7 @@ class BackEndInterface:
     def init(self):
         self.connect()
         self.set_correct_time()
-        # self.mqtt_connect()  # TODO uncomment for MQTT iteraction
+        self.mqtt_connect()  # TODO uncomment for MQTT iteraction
 
     def connect(self):
         logger.debug("Connecting...")
@@ -126,13 +126,29 @@ class BackEndInterface:
         try:
             self.mqtt_client = MQTTClient(self.client_id,
                                           self.mqtt_server_ip,
-                                          user=self.user_raspberry,
-                                          password=self.pass_rasberry,
+                                          user=self.mqtt_user,
+                                          password=self.mqtt_password,
                                           keepalive=60)
+            logger.debug("MQTT Client set up")
+            logger.debug("Server: {}\nUser: {}\nPassword: {}".format(self.mqtt_server_ip,
+                                                                     self.mqtt_user,
+                                                                     self.mqtt_password))
             self.mqtt_client.set_callback(self.sub_cb)
-            self.mqtt_client.connect()
+            logger.debug("Callback set")
+            for i in range(3):
+                logger.debug("MQTT Connection retry: {}/3".format(i+1))
+                status = "N/A"
+                time.sleep(1)
+                try:
+                    status = self.mqtt_client.connect()
+                    break
+                except:
+                    logger.warning("Connection refused: {}".format(status))
+            logger.debug("Connected")
             self.mqtt_status = True
+            logger.debug("Updated mqtt status")
             self.mqtt_client.subscribe(self.subscribed_tipic)
+            logger.debug("Tipic subscribed")
             logger.debug("Connected to MQTT.")
         except:
             logger.warning("Not possible to connect to MQTT!")
@@ -284,6 +300,7 @@ class Garden:
         self.last_logging_time = utime.time()
 
         self.watering_timer = utime.time()
+        self.daily_watering_done = False
         self.watering_period = 1 * 24 * 60 * 60  # Days
         self.watering_period = 50  # TODO erase this for real application
         self.watering_iterations = 3
@@ -291,6 +308,7 @@ class Garden:
 
         self.back_sync_timer = utime.time()
         self.back_sync_period = 60 * 60  # Period of time for backend sync
+        self.back_sync_period = 12  # TODO erase for real application
 
         self.sensor_reading_timer = utime.time()
         self.sensor_reading_period = 20 * 60  # Sensor reading period
@@ -345,18 +363,19 @@ class Garden:
         return False
 
     def is_watering_moment(self):
-        if (utime.time() - self.watering_timer) >= self.watering_period:
-            logger.debug("Watering timeout expired")
-            if self.backend.ntp_sync_done:
-                logger.debug("NTP was sync")
-                if self._is_evening():
-                    logger.debug("Evening detected")
-                    return True
+        if not self.daily_watering_done:
+            if (utime.time() - self.watering_timer) >= self.watering_period:
+                if self.backend.ntp_sync_done:
+                    if self._is_evening():
+                        self.daily_watering_done = True
+                        return True
+                    else:
+                        return False
                 else:
-                    return False
-            else:
-                logger.debug("NTP not sync. Watering timeout expired.")
-                return True
+                    logger.debug("NTP not sync. Watering timeout expired.")
+                    self.daily_watering_done = True
+                    return True
+            return False
         return False
 
     def pump_cycle(self):
@@ -372,9 +391,21 @@ class Garden:
             logger.debug("Backend sync time")
             return True
         return False
+    
+    def _pump_status_str_dict(self) -> str:
+        status = {}
+        for pump in self.pumps:
+            current = {}
+            current["id"] = pump.pump_id
+            current["status"] = pump.status
+            status[str(pump.pump_id)] = current
+        return str(status)
 
     def send_data_to_back(self):
-        # collect pums status
+        logger.debug("Collecting pump status...")
+        pump_satus = self._pump_status_str_dict()
+        self.backend.mqtt_client.publish("garden/all_sensor", pump_satus)
+        logger.debug("MQTT - Pump status sent")
         # collect sensor status
         # collect sensor data
         # send data via mqtt
