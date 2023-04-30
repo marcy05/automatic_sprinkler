@@ -94,6 +94,7 @@ def _message_to_dict(mqtt_message):
 def _prepare_data_influx_structure(data_in):
     data = {
         "measurements": "Garden",
+	"tags": {"garden": "Garden"},
         "time": datetime.now(),
         "fields": data_in
     }
