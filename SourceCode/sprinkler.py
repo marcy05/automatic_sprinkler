@@ -5,6 +5,7 @@ import time
 from my_secret import secret
 from umqtt.simple import MQTTClient
 import my_ntp
+import json
 
 # #############################################################################
 #                               CLASSES
@@ -402,7 +403,7 @@ class Garden:
             return True
         return False
     
-    def _collect_data(self):
+    def _collect_data(self) -> dict:
         data_dict = {}
         
         for pump in self.pumps:
@@ -414,18 +415,25 @@ class Garden:
             for entry in sensor_data:
                 plant[entry] = sensor_data[entry]
             data_dict["Plant{}".format(sensor.sensor_id)] = plant
+
+        just_value = {}
+        for plant in data_dict:
+            data = data_dict[plant]
+            for key in data:
+                just_value[key] = data[key]
         
-        return data_dict
+        logger.debug("Data to be sent:\n{}".format(json.dumps(just_value)))
+
+        return just_value
+    
+    def _dict_2_str(self, conv_data: dict) -> str:
+        return json.dumps(conv_data)
 
     def send_data_to_back(self):
         logger.debug("Collecting data...")
-        pump_satus = self._pump_status_str_dict()
-        self.backend.mqtt_client.publish("garden/all_sensor", pump_satus)
+        str_data = self._dict_2_str(self._collect_data())
+        self.backend.mqtt_client.publish("garden/status", str_data)
         logger.debug("MQTT - Pump status sent")
-        # collect sensor status
-        # collect sensor data
-        # send data via mqtt
-        pass
 
     def is_sensor_reading_moment(self):
         if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
