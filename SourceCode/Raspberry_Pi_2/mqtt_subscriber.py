@@ -83,7 +83,7 @@ def on_connect(client, userdata, flags, rc):
             "4":"refused-Bad User or Password", "5":"refused-Not authorised"}
     logger.info("Connected with result code: {}".format(status[str(rc)]))
 
-def message_to_dict(mqtt_message):
+def _message_to_dict(mqtt_message):
     msg_str = mqtt_message.decode("utf-8")
     msg_str = msg_str.replace("'", '"')
     msg_str = msg_str.replace("T", "t")
@@ -91,18 +91,31 @@ def message_to_dict(mqtt_message):
     dict_msg = json.loads(msg_str)
     return dict_msg
 
+def _prepare_data_influx_structure(data_in):
+    data = {
+        "measurements": "Garden",
+        "time": datetime.now(),
+        "fields": data_in
+    }
+    return data
+
 def _send_to_influx(data_dict: dict):
     message_list = [data_dict]
-    influxdb_client.write_points(message_list)
+    status = influxdb_client.write_points(message_list)
+    if status:
+        logger.debug("InfluxDB | Write ok")
+    else:
+        logger.debug("InfluxDB | Write NOT ok")
 
 def on_message(client, userdata, msg):
     logger.debug("Received message...")
     logger.debug("Topic:" + msg.topic + " Payload: " + str(msg.payload))
     logger.debug("Parsing message...")
-    msg_dict = message_to_dict(msg.payload)
+    msg_dict = _message_to_dict(msg.payload)
     logger.debug("Received message: {}".format(msg_dict))
+    collected_data = _prepare_data_influx_structure(msg_dict)
     logger.debug("populate influxdn")
-    _send_to_influx(msg_dict)
+    _send_to_influx(collected_data)
 
 def main():
     _init_indluxdb_database()
