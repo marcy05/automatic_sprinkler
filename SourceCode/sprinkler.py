@@ -256,6 +256,11 @@ class Pump:
         self.pump_id = pump_id
         self.status = True
         self.activation_period = 2  # Value in seconds
+    
+    def get_db_data(self) -> dict:
+        data = {"Pump{}Status".format(self.pump_id): self.status,
+                "Pump{}ActPeriod".format(self.pump_id): self.activation_period}
+        return data
 
     def set_pump_value(self, signal: bool):
         logger.debug("Pump: {}, setting value: {}".format(self.pump_id,
@@ -290,7 +295,12 @@ class Sensor:
             return self.current_value
         else:
             return 0
-
+    
+    def get_db_data(self) -> dict:
+        data = {"Sensor{}Status".format(self.sensor_id): self.status,
+                "Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold,
+                "Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
+        return data
 
 class Garden:
     def __init__(self) -> None:
@@ -392,17 +402,24 @@ class Garden:
             return True
         return False
     
-    def _pump_status_str_dict(self) -> str:
-        status = {}
+    def _collect_data(self):
+        data_dict = {}
+        
         for pump in self.pumps:
-            current = {}
-            current["id"] = pump.pump_id
-            current["status"] = pump.status
-            status[str(pump.pump_id)] = current
-        return str(status)
+            data_dict["Plant{}".format(pump.pump_id)] = pump.get_db_data()
+        
+        for sensor in self.sensors:
+            plant = data_dict["Plant{}".format(sensor.sensor_id)]
+            sensor_data = sensor.get_db_data()
+            for entry in sensor_data:
+                plant[entry] = sensor_data[entry]
+            data_dict["Plant{}".format(sensor.sensor_id)] = plant
+        
+        return data_dict
+
 
     def send_data_to_back(self):
-        logger.debug("Collecting pump status...")
+        logger.debug("Collecting data...")
         pump_satus = self._pump_status_str_dict()
         self.backend.mqtt_client.publish("garden/all_sensor", pump_satus)
         logger.debug("MQTT - Pump status sent")
@@ -424,7 +441,8 @@ class Garden:
 
     def run(self):
 
-        if self.is_watering_moment():
+        #if self.is_watering_moment():
+        if False:
             self.pump_cycle()
             self.watering_timer = utime.time()
 
