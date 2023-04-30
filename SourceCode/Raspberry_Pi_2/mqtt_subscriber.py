@@ -85,15 +85,16 @@ def on_connect(client, userdata, flags, rc):
 
 def _message_to_dict(mqtt_message):
     msg_str = mqtt_message.decode("utf-8")
-    msg_str = msg_str.replace("'", '"')
-    msg_str = msg_str.replace("T", "t")
-    msg_str = msg_str.replace("F", "f")
+    #msg_str = msg_str.replace("'", '"')
+    #msg_str = msg_str.replace("T", "t")
+    #msg_str = msg_str.replace("F", "f")
     dict_msg = json.loads(msg_str)
     return dict_msg
 
 def _prepare_data_influx_structure(data_in):
     data = {
-        "measurements": "Garden",
+        "measurement": "Garden",
+	"tags": {"garden": "Garden"},
         "time": datetime.now(),
         "fields": data_in
     }
