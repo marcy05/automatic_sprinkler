@@ -422,7 +422,7 @@ class Garden:
             for key in data:
                 just_value[key] = data[key]
         
-        logger.debug("Data to be sent:\n{}".format(json.dumps(just_value)))
+        #logger.debug("Data to be sent:\n{}".format(json.dumps(just_value)))
 
         return just_value
     
