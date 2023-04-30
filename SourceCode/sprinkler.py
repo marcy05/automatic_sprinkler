@@ -417,7 +417,6 @@ class Garden:
         
         return data_dict
 
-
     def send_data_to_back(self):
         logger.debug("Collecting data...")
         pump_satus = self._pump_status_str_dict()
