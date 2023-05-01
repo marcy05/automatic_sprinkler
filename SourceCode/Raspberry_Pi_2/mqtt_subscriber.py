@@ -94,6 +94,7 @@ def _message_to_dict(mqtt_message):
 def _prepare_data_influx_structure(data_in):
     time_now = datetime.now()
     time_utc = time_now.replace(tzinfo=timezone.utc)
+    #print(time_utc)
     data = {
         "measurement": "Garden",
 	"tags": {"garden": "Garden"},
@@ -112,7 +113,7 @@ def _send_to_influx(data_dict: dict):
 
 def on_message(client, userdata, msg):
     logger.debug("Received message...")
-    logger.debug("Topic:" + msg.topic + " Payload: " + str(msg.payload))
+    #logger.debug("Topic:" + msg.topic + " Payload: " + str(msg.payload))
     logger.debug("Parsing message...")
     msg_dict = _message_to_dict(msg.payload)
     #logger.debug("Received message: {}".format(msg_dict))
