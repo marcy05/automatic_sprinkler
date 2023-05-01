@@ -113,7 +113,7 @@ def on_message(client, userdata, msg):
     logger.debug("Topic:" + msg.topic + " Payload: " + str(msg.payload))
     logger.debug("Parsing message...")
     msg_dict = _message_to_dict(msg.payload)
-    logger.debug("Received message: {}".format(msg_dict))
+    #logger.debug("Received message: {}".format(msg_dict))
     collected_data = _prepare_data_influx_structure(msg_dict)
     logger.debug("populate influxdn")
     _send_to_influx(collected_data)
