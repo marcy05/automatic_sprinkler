@@ -255,12 +255,20 @@ class HwInterface:
 class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
-        self.status = True
+        self.status = False
         self.activation_period = 2  # Value in seconds
     
     def get_db_data(self) -> dict:
         data = {"Pump{}Status".format(self.pump_id): self.status,
                 "Pump{}ActPeriod".format(self.pump_id): self.activation_period}
+        return data
+    
+    def get_db_status(self) -> dict:
+        data = {"Pump{}Status".format(self.pump_id): self.status}
+        return data
+    
+    def get_db_Act_period(self) -> dict:
+        data = {"Pump{}ActPeriod".format(self.pump_id): self.activation_period}
         return data
 
     def set_pump_value(self, signal: bool):
@@ -301,6 +309,18 @@ class Sensor:
         data = {"Sensor{}Status".format(self.sensor_id): self.status,
                 "Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold,
                 "Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
+        return data
+    
+    def get_db_status(self) -> dict:
+        data = {"Sensor{}Status".format(self.sensor_id): self.status}
+        return data
+    
+    def get_db_actThreshold(self) -> dict:
+        data = {"Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold}
+        return data
+    
+    def get_db_current_val(self) -> dict:
+        data = {"Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
         return data
 
 class Garden:
@@ -421,8 +441,6 @@ class Garden:
             data = data_dict[plant]
             for key in data:
                 just_value[key] = data[key]
-        
-        #logger.debug("Data to be sent:\n{}".format(json.dumps(just_value)))
 
         return just_value
     
