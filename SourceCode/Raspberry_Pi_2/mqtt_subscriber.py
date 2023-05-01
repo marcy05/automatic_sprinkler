@@ -4,7 +4,7 @@ import json
 import logging
 import paho.mqtt.client as mqtt
 from influxdb import InfluxDBClient
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -92,10 +92,12 @@ def _message_to_dict(mqtt_message):
     return dict_msg
 
 def _prepare_data_influx_structure(data_in):
+    time_now = datetime.now()
+    time_utc = time_now.replace(tzinfo=timezone.utc)
     data = {
         "measurement": "Garden",
 	"tags": {"garden": "Garden"},
-        "time": datetime.now(),
+        "time": time_utc,
         "fields": data_in
     }
     return data
