@@ -5,6 +5,7 @@ import time
 from my_secret import secret
 from umqtt.simple import MQTTClient
 import my_ntp
+import json
 
 # #############################################################################
 #                               CLASSES
@@ -254,12 +255,20 @@ class HwInterface:
 class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
-        self.status = True
+        self.status = False
         self.activation_period = 2  # Value in seconds
     
     def get_db_data(self) -> dict:
         data = {"Pump{}Status".format(self.pump_id): self.status,
                 "Pump{}ActPeriod".format(self.pump_id): self.activation_period}
+        return data
+    
+    def get_db_status(self) -> dict:
+        data = {"Pump{}Status".format(self.pump_id): self.status}
+        return data
+    
+    def get_db_Act_period(self) -> dict:
+        data = {"Pump{}ActPeriod".format(self.pump_id): self.activation_period}
         return data
 
     def set_pump_value(self, signal: bool):
@@ -300,6 +309,18 @@ class Sensor:
         data = {"Sensor{}Status".format(self.sensor_id): self.status,
                 "Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold,
                 "Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
+        return data
+    
+    def get_db_status(self) -> dict:
+        data = {"Sensor{}Status".format(self.sensor_id): self.status}
+        return data
+    
+    def get_db_actThreshold(self) -> dict:
+        data = {"Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold}
+        return data
+    
+    def get_db_current_val(self) -> dict:
+        data = {"Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
         return data
 
 class Garden:
@@ -402,7 +423,7 @@ class Garden:
             return True
         return False
     
-    def _collect_data(self):
+    def _collect_data(self) -> dict:
         data_dict = {}
         
         for pump in self.pumps:
@@ -414,18 +435,23 @@ class Garden:
             for entry in sensor_data:
                 plant[entry] = sensor_data[entry]
             data_dict["Plant{}".format(sensor.sensor_id)] = plant
-        
-        return data_dict
+
+        just_value = {}
+        for plant in data_dict:
+            data = data_dict[plant]
+            for key in data:
+                just_value[key] = data[key]
+
+        return just_value
+    
+    def _dict_2_str(self, conv_data: dict) -> str:
+        return json.dumps(conv_data)
 
     def send_data_to_back(self):
         logger.debug("Collecting data...")
-        pump_satus = self._pump_status_str_dict()
-        self.backend.mqtt_client.publish("garden/all_sensor", pump_satus)
+        str_data = self._dict_2_str(self._collect_data())
+        self.backend.mqtt_client.publish("garden/status", str_data)
         logger.debug("MQTT - Pump status sent")
-        # collect sensor status
-        # collect sensor data
-        # send data via mqtt
-        pass
 
     def is_sensor_reading_moment(self):
         if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
