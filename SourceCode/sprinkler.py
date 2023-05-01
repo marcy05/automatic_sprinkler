@@ -6,6 +6,7 @@ from my_secret import secret
 from umqtt.simple import MQTTClient
 import my_ntp
 import json
+import _thread
 
 # #############################################################################
 #                               CLASSES
@@ -279,8 +280,10 @@ class Pump:
 
     def watering(self):
         self.set_pump_value(True)
+        self.status = True
         utime.sleep(self.activation_period)
         self.set_pump_value(False)
+        self.status = False
 
 
 class Sensor:
@@ -339,7 +342,9 @@ class Garden:
 
         self.back_sync_timer = utime.time()
         self.back_sync_period = 60 * 60  # Period of time for backend sync
-        self.back_sync_period = 12  # TODO erase for real application
+        self.back_sync_period = 1.2  # TODO erase for real application
+
+        self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
 
         self.sensor_reading_timer = utime.time()
         self.sensor_reading_period = 20 * 60  # Sensor reading period
@@ -413,8 +418,7 @@ class Garden:
         for iteration in range(self.watering_iterations):
             logger.debug("Watering iteration: {}/{}".format(iteration+1, self.watering_iterations))
             for pump in self.pumps:
-                if pump.status:
-                    pump.watering()
+                pump.watering()
             utime.sleep(self.watering_itersations_delay)
 
     def is_backend_sync_moment(self):
@@ -450,8 +454,9 @@ class Garden:
     def send_data_to_back(self):
         logger.debug("Collecting data...")
         str_data = self._dict_2_str(self._collect_data())
-        self.backend.mqtt_client.publish("garden/status", str_data)
-        logger.debug("MQTT - Pump status sent")
+        if self.backend.mqtt_status:
+            self.backend.mqtt_client.publish("garden/status", str_data)
+            logger.debug("MQTT - Pump status sent")
 
     def is_sensor_reading_moment(self):
         if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
@@ -463,17 +468,25 @@ class Garden:
         for i in range(len(self.sensors)):
             sensor_value = self.sensors[i].get_voltage()
             logger.debug("Sensor: {} -> Voltage: {}".format(i, sensor_value))
+    
+    def thread_backend_sync(self):
+        while True:
+            try:
+                if self.is_backend_sync_moment():
+                    self.send_data_to_back()
+                    self.back_sync_timer = utime.time()
+            except AttributeError as e:
+                logger.error("Thread error! Exception: \n{}".format(e))
+                utime.sleep(2)
+            except:
+                utime.sleep(2)
+                pass
 
     def run(self):
 
-        #if self.is_watering_moment():
-        if False:
+        if self.is_watering_moment():
             self.pump_cycle()
             self.watering_timer = utime.time()
-
-        if self.is_backend_sync_moment():
-            self.send_data_to_back()
-            self.back_sync_timer = utime.time()
 
         if self.is_sensor_reading_moment():
             self.reading_sensors()
