@@ -146,6 +146,8 @@ class BackEndInterface:
                     break
                 except:
                     logger.warning("Connection refused: {}".format(status))
+                    self.mqtt_status = False
+                    return False
             logger.debug("Connected")
             self.mqtt_status = True
             logger.debug("Updated mqtt status")
