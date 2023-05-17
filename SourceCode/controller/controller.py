@@ -1,6 +1,6 @@
 import machine
 import utime
-
+from umqtt.simple import MQTTClient
 class Pump:
     def __init__(self, pump_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
         self.pump_id: int = pump_id
@@ -12,16 +12,6 @@ class Pump:
         self.red = machine.Pin(self._red_gpio, machine.Pin.OUT)
         self.green = machine.Pin(self._green_gpio, machine.Pin.OUT)
 
-
-# tuple of GPIO for Button
-# tuple of tuple ((button, red, green), (button, red, green), ...)
-pump_tuple = ((5, 28, 27),
-              (6, 26, 22),
-              (7, 21, 20),
-              (8, 19, 18),
-              (9, 17, 16),
-              (10, 12, 13),
-              (11, 14, 15))
 
 # #### GLOBAL VARIABLE
 p0 = Pump(0, 5, 28, 27)
