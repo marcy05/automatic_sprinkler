@@ -1,6 +1,6 @@
 import machine
 import utime
-
+from umqtt.simple import MQTTClient
 
 class Pump:
     def __init__(self, pump_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
@@ -25,12 +25,12 @@ pump_tuple = ((5, 28, 27),
               (11, 14, 15))
 
 # #### GLOBAL VARIABLE
-p0 = Pump(0, 5, 28, 27),
-p1 = Pump(1, 6, 26, 22),
-p2 = Pump(2, 7, 21, 20),
-p3 = Pump(3, 8, 19, 18),
-p4 = Pump(4, 9, 17, 16),
-p5 = Pump(5, 10, 12, 13),
+p0 = Pump(0, 5, 28, 27)
+p1 = Pump(1, 6, 26, 22)
+p2 = Pump(2, 7, 21, 20)
+p3 = Pump(3, 8, 19, 18)
+p4 = Pump(4, 9, 17, 16)
+p5 = Pump(5, 10, 12, 13)
 p6 = Pump(6, 11, 14, 15)
 pump_list = [p0, p1, p2, p3, p4, p5, p6]
 
@@ -60,64 +60,15 @@ def start_animation():
     for pump in pump_list:
         pump.red.value(1)
         utime.sleep(.1)
-        pump.green.value(1)
-    utime.sleep(1)
-    for pump in reversed(pump_list):
-        pump.green.value(0)
-        utime.sleep(.1)
         pump.red.value(0)
+        pump.green.value(1)
+        utime.sleep(.1)
+        pump.green.value(0)
+
     print("Finish animation")
 
 # ####  MAIN
+set_off_green()
+set_off_red()
 start_animation()
 
-while True:
-    if p0.button.value():
-        p0.green.value(1)
-        p0.red.value(1)
-        utime.sleep(.5)
-        p0.green.value(0)
-        p0.red.value(0)
-        utime.sleep(.5)
-    if p1.button.value():
-        p1.green.value(1)
-        p1.red.value(1)
-        utime.sleep(.5)
-        p1.green.value(0)
-        p1.red.value(0)
-        utime.sleep(.5)
-    if p2.button.value():
-        p2.green.value(1)
-        p2.red.value(1)
-        utime.sleep(.5)
-        p2.green.value(0)
-        p2.red.value(0)
-        utime.sleep(.5)
-    if p3.button.value():
-        p3.green.value(1)
-        p3.red.value(1)
-        utime.sleep(.5)
-        p3.green.value(0)
-        p3.red.value(0)
-        utime.sleep(.5)
-    if p4.button.value():
-        p4.green.value(1)
-        p4.red.value(1)
-        utime.sleep(.5)
-        p4.green.value(0)
-        p4.red.value(0)
-        utime.sleep(.5)
-    if p5.button.value():
-        p5.green.value(1)
-        p5.red.value(1)
-        utime.sleep(.5)
-        p5.green.value(0)
-        p5.red.value(0)
-        utime.sleep(.5)
-    if p6.button.value():
-        p6.green.value(1)
-        p6.red.value(1)
-        utime.sleep(.5)
-        p6.green.value(0)
-        p6.red.value(0)
-        utime.sleep(.5)
