@@ -1,6 +1,5 @@
 import machine
 import utime
-from umqtt.simple import MQTTClient
 
 class Pump:
     def __init__(self, pump_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
@@ -72,3 +71,56 @@ set_off_green()
 set_off_red()
 start_animation()
 
+
+while True:
+
+    if not p0.button.value():
+        p0.green.value(1)
+        p0.red.value(1)
+        utime.sleep(.5)
+        p0.green.value(0)
+        p0.red.value(0)
+        utime.sleep(.5)
+    if not p1.button.value():
+        p1.green.value(1)
+        p1.red.value(1)
+        utime.sleep(.5)
+        p1.green.value(0)
+        p1.red.value(0)
+        utime.sleep(.5)
+    if not p2.button.value():
+        p2.green.value(1)
+        p2.red.value(1)
+        utime.sleep(.5)
+        p2.green.value(0)
+        p2.red.value(0)
+        utime.sleep(.5)
+    if not p3.button.value():
+        p3.green.value(1)
+        p3.red.value(1)
+        utime.sleep(.5)
+        p3.green.value(0)
+        p3.red.value(0)
+        utime.sleep(.5)
+    if not p4.button.value():
+        p4.green.value(1)
+        p4.red.value(1)
+        utime.sleep(.5)
+        p4.green.value(0)
+        p4.red.value(0)
+        utime.sleep(.5)
+    if not p5.button.value():
+        p5.green.value(1)
+        p5.red.value(1)
+        utime.sleep(.5)
+        p5.green.value(0)
+        p5.red.value(0)
+        utime.sleep(.5)
+    if not p6.button.value():
+        p6.green.value(1)
+        p6.red.value(1)
+        utime.sleep(.5)
+        p6.green.value(0)
+        p6.red.value(0)
+        utime.sleep(.5)
+    utime.sleep(.2)
