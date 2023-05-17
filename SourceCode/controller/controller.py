@@ -7,14 +7,17 @@ from secret import secret
 class MqttClient:
     def __init__(self):
         self.wlan = network.WLAN(network.STA_IF)
+        self.mqtt_client = MQTTClient
         self.network_ssid = secret["network_ssid"]
         self.network_password = secret["network_password"]
         self.mqtt_server_ip = secret["mqtt_server_ip"]
         self.client_id = secret["client_id"]
         self.mqtt_user = secret["mqtt_user"]
         self.mqtt_password = secret["mqtt_password"]
+        self.subscribed_tipic = "garden"
 
         self.connect()
+        self.mqtt_connect()
     
     def connect(self):
         print("Connecting...")
@@ -31,6 +34,48 @@ class MqttClient:
                 break
         if not self.wlan.isconnected():
             print("Not possible to connect to internet.")
+    
+    def sub_cb(self, topic, msg):
+        print("New message on topic {}".format(topic.decode('utf-8')))
+        msg = msg.decode('utf-8')
+        print(msg)
+    
+    def mqtt_connect(self):
+        print("Connecting to MQTT broker...")
+        try:
+            self.mqtt_client = MQTTClient(self.client_id,
+                                          self.mqtt_server_ip,
+                                          user=self.mqtt_user,
+                                          password=self.mqtt_password,
+                                          keepalive=60)
+            print("MQTT Client set up")
+            # print("Server: {}\nUser: {}\nPassword: {}".format(self.mqtt_server_ip,
+            #                                                          self.mqtt_user,
+            #                                                          self.mqtt_password))
+            self.mqtt_client.set_callback(self.sub_cb)
+            print("Callback set")
+            for i in range(3):
+                print("MQTT Connection retry: {}/3".format(i+1))
+                status = "N/A"
+                utime.sleep(.5)
+                try:
+                    status = self.mqtt_client.connect()
+                    break
+                except:
+                    print("Connection refused: {}".format(status))
+                    if i == 2:
+                        return False
+            print("MQTT Connected")
+            print("Subscribe...")
+            try:
+                self.mqtt_client.subscribe(self.subscribed_tipic)
+                print("Tipic subscribed")
+            except:
+                print("ERROR - MQTT No subscription possible")
+                return False
+            print("MQTT Connection completed.")
+        except:
+            print("Not possible to connect to MQTT!")
 
 class Pump:
     def __init__(self, pump_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
@@ -95,7 +140,7 @@ set_off_red()
 start_animation()
 
 print("Entering infinite loop")
-while True:
+while False:
 
     if not p0.button.value():
         p0.green.value(1)
