@@ -7,14 +7,9 @@ from secret import secret
 
 class MqttClient:
     def __init__(self):
-        self.wlan = network.WLAN(network.STA_IF)
+        self._wlan = network.WLAN(network.STA_IF)
         self.mqtt_client = MQTTClient
-        self.network_ssid = secret["network_ssid"]
-        self.network_password = secret["network_password"]
-        self.mqtt_server_ip = secret["mqtt_server_ip"]
-        self.client_id = secret["client_id"]
-        self.mqtt_user = secret["mqtt_user"]
-        self.mqtt_password = secret["mqtt_password"]
+
         self.subscribed_tipic = "garden"
 
         self.connect()
@@ -22,18 +17,18 @@ class MqttClient:
 
     def connect(self):
         print("Connecting...")
-        self.wlan.active(True)
-        self.wlan.connect(self.network_ssid, self.network_password)
+        self._wlan.active(True)
+        self._wlan.connect(secret["network_ssid"], secret["network_password"])
         max_retries = 20
         for i in range(max_retries):
-            if not self.wlan.isconnected():
+            if not self._wlan.isconnected():
                 print("Connection retry {}/{}".format(i+1, max_retries))
                 utime.sleep(1)
             else:
                 print("Connected.")
                 self.network_status = True
                 break
-        if not self.wlan.isconnected():
+        if not self._wlan.isconnected():
             print("Not possible to connect to internet.")
 
     def sub_cb(self, topic, msg):
@@ -44,15 +39,13 @@ class MqttClient:
     def mqtt_connect(self):
         print("Connecting to MQTT broker...")
         try:
-            self.mqtt_client = MQTTClient(self.client_id,
-                                          self.mqtt_server_ip,
-                                          user=self.mqtt_user,
-                                          password=self.mqtt_password,
+            self.mqtt_client = MQTTClient(secret["client_id"],
+                                          secret["mqtt_server_ip"],
+                                          user=secret["mqtt_user"],
+                                          password=secret["mqtt_password"],
                                           keepalive=60)
             print("MQTT Client set up")
-            # print("Server: {}\nUser: {}\nPassword: {}".format(self.mqtt_server_ip,
-            #                                                          self.mqtt_user,
-            #                                                          self.mqtt_password))
+
             self.mqtt_client.set_callback(self.sub_cb)
             print("Callback set")
             for i in range(3):
@@ -77,7 +70,6 @@ class MqttClient:
             print("MQTT Connection completed.")
         except Exception:
             print("Not possible to connect to MQTT!")
-
 
 class Button:
     def __init__(self, button_id: int = 99, button_gpio: int = 99, led_gpio: int = 99):
@@ -139,9 +131,9 @@ def main():
         for button_item in controller.button_list:
             if not button_item.button.value():
                 button_item.trigger_led()
+                backend.mqtt_client.push("garder/pump{}/activate".format(button_item.button_id))
 
 # ####  MAIN
 
 set_up()
 main()
-
