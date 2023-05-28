@@ -4,6 +4,7 @@ import network
 from umqtt.simple import MQTTClient
 from secret import secret
 
+
 class MqttClient:
     def __init__(self):
         self.wlan = network.WLAN(network.STA_IF)
@@ -18,7 +19,7 @@ class MqttClient:
 
         self.connect()
         self.mqtt_connect()
-    
+
     def connect(self):
         print("Connecting...")
         self.wlan.active(True)
@@ -34,12 +35,12 @@ class MqttClient:
                 break
         if not self.wlan.isconnected():
             print("Not possible to connect to internet.")
-    
+
     def sub_cb(self, topic, msg):
         print("New message on topic {}".format(topic.decode('utf-8')))
         msg = msg.decode('utf-8')
         print(msg)
-    
+
     def mqtt_connect(self):
         print("Connecting to MQTT broker...")
         try:
@@ -61,7 +62,7 @@ class MqttClient:
                 try:
                     status = self.mqtt_client.connect()
                     break
-                except:
+                except Exception:
                     print("Connection refused: {}".format(status))
                     if i == 2:
                         return False
@@ -70,125 +71,77 @@ class MqttClient:
             try:
                 self.mqtt_client.subscribe(self.subscribed_tipic)
                 print("Tipic subscribed")
-            except:
+            except Exception:
                 print("ERROR - MQTT No subscription possible")
                 return False
             print("MQTT Connection completed.")
-        except:
+        except Exception:
             print("Not possible to connect to MQTT!")
 
-class Button:
-    def __init__(self, Button_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
-        self.Button_id: int = Button_id
-        self._button_gpio: int = button_gpio
-        self._red_gpio: int = red_gpio
-        self._green_gpio: int = green_gpio
 
-        self.button = machine.Pin(self._button_gpio, machine.Pin.IN, machine.Pin.PULL_UP)
-        self.red = machine.Pin(self._red_gpio, machine.Pin.OUT)
-        self.green = machine.Pin(self._green_gpio, machine.Pin.OUT)
+class Button:
+    def __init__(self, button_id: int = 99, button_gpio: int = 99, led_gpio: int = 99):
+        self.button_id: int = button_id
+        self._button_gpio: int = button_gpio
+        self._led_gpio: int = led_gpio
+
+        self.button = machine.Pin(
+            self._button_gpio, machine.Pin.IN, machine.Pin.PULL_UP)
+        self.led = machine.Pin(self._led_gpio, machine.Pin.OUT)
+
+    def trigger_led(self):
+        self.led.value(1)
+        utime.sleep(.2)
+        self.led.value(0)
+
+
+class Controller:
+    def __init__(self) -> None:
+        self._controller_gpio = {
+            0: {"button": 5,
+                "led": 28},
+            1: {"button": 6,
+                "led": 27},
+            2: {"button": 7,
+                "led": 26},
+            3: {"button": 8,
+                "led": 22},
+            4: {"button": 9,
+                "led": 21},
+            5: {"button": 10,
+                "led": 20},
+            6: {"button": 11,
+                "led": 19},
+        }
+
+        self.button_list = [Button(key, self._controller_gpio[key]["button"],
+                                   self._controller_gpio[key]["led"]) for key in self._controller_gpio]
+        
+    def welcome_animation(self):
+        for button in self.button_list:
+            button.led.value(1)
+            utime.sleep(.2)
+            button.led.value(0)
 
 
 # #### GLOBAL VARIABLE
-p0 = Button(0, 5, 28, 27)
-p1 = Button(1, 6, 26, 22)
-p2 = Button(2, 7, 21, 20)
-p3 = Button(3, 8, 19, 18)
-p4 = Button(4, 9, 17, 16)
-p5 = Button(5, 10, 12, 13)
-p6 = Button(6, 11, 14, 15)
-Button_list = [p0, p1, p2, p3, p4, p5, p6]
-
+controller = Controller()
+backend = MqttClient()
 # ####  GLOBAL FUNCTIONS
 
-def set_on_red():
-    for Button in Button_list:
-        Button.red.value(1)
-    print("Set all red on")
+def set_up():
+    global controller
 
-def set_off_red():
-    for Button in Button_list:
-        Button.red.value(0)
-    print("Set all red off")
+    controller.welcome_animation()
 
-def set_on_green():
-    for Button in Button_list:
-        Button.green.value(1)
-    print("Set all green on")
-
-def set_off_green():
-    for Button in Button_list:
-        Button.green.value(0)
-    print("Set all green off")
-
-def start_animation():
-    print("Start animation")
-    for Button in Button_list:
-        Button.red.value(1)
-        utime.sleep(.1)
-        Button.red.value(0)
-        Button.green.value(1)
-        utime.sleep(.1)
-        Button.green.value(0)
-    print("Finish animation")
+def main():
+    while True:
+        for button_item in controller.button_list:
+            if not button_item.button.value():
+                button_item.trigger_led()
 
 # ####  MAIN
 
-backend = MqttClient()
-set_off_green()
-set_off_red()
-start_animation()
+set_up()
+main()
 
-print("Entering infinite loop")
-while False:
-
-    if not p0.button.value():
-        p0.green.value(1)
-        p0.red.value(1)
-        utime.sleep(.5)
-        p0.green.value(0)
-        p0.red.value(0)
-        utime.sleep(.5)
-    if not p1.button.value():
-        p1.green.value(1)
-        p1.red.value(1)
-        utime.sleep(.5)
-        p1.green.value(0)
-        p1.red.value(0)
-        utime.sleep(.5)
-    if not p2.button.value():
-        p2.green.value(1)
-        p2.red.value(1)
-        utime.sleep(.5)
-        p2.green.value(0)
-        p2.red.value(0)
-        utime.sleep(.5)
-    if not p3.button.value():
-        p3.green.value(1)
-        p3.red.value(1)
-        utime.sleep(.5)
-        p3.green.value(0)
-        p3.red.value(0)
-        utime.sleep(.5)
-    if not p4.button.value():
-        p4.green.value(1)
-        p4.red.value(1)
-        utime.sleep(.5)
-        p4.green.value(0)
-        p4.red.value(0)
-        utime.sleep(.5)
-    if not p5.button.value():
-        p5.green.value(1)
-        p5.red.value(1)
-        utime.sleep(.5)
-        p5.green.value(0)
-        p5.red.value(0)
-        utime.sleep(.5)
-    if not p6.button.value():
-        p6.green.value(1)
-        p6.red.value(1)
-        utime.sleep(.5)
-        p6.green.value(0)
-        p6.red.value(0)
-        utime.sleep(.5)
-    utime.sleep(.2)
