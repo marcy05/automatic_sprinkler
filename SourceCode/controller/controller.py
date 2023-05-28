@@ -77,9 +77,9 @@ class MqttClient:
         except:
             print("Not possible to connect to MQTT!")
 
-class Pump:
-    def __init__(self, pump_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
-        self.pump_id: int = pump_id
+class Button:
+    def __init__(self, Button_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
+        self.Button_id: int = Button_id
         self._button_gpio: int = button_gpio
         self._red_gpio: int = red_gpio
         self._green_gpio: int = green_gpio
@@ -90,46 +90,46 @@ class Pump:
 
 
 # #### GLOBAL VARIABLE
-p0 = Pump(0, 5, 28, 27)
-p1 = Pump(1, 6, 26, 22)
-p2 = Pump(2, 7, 21, 20)
-p3 = Pump(3, 8, 19, 18)
-p4 = Pump(4, 9, 17, 16)
-p5 = Pump(5, 10, 12, 13)
-p6 = Pump(6, 11, 14, 15)
-pump_list = [p0, p1, p2, p3, p4, p5, p6]
+p0 = Button(0, 5, 28, 27)
+p1 = Button(1, 6, 26, 22)
+p2 = Button(2, 7, 21, 20)
+p3 = Button(3, 8, 19, 18)
+p4 = Button(4, 9, 17, 16)
+p5 = Button(5, 10, 12, 13)
+p6 = Button(6, 11, 14, 15)
+Button_list = [p0, p1, p2, p3, p4, p5, p6]
 
 # ####  GLOBAL FUNCTIONS
 
 def set_on_red():
-    for pump in pump_list:
-        pump.red.value(1)
+    for Button in Button_list:
+        Button.red.value(1)
     print("Set all red on")
 
 def set_off_red():
-    for pump in pump_list:
-        pump.red.value(0)
+    for Button in Button_list:
+        Button.red.value(0)
     print("Set all red off")
 
 def set_on_green():
-    for pump in pump_list:
-        pump.green.value(1)
+    for Button in Button_list:
+        Button.green.value(1)
     print("Set all green on")
 
 def set_off_green():
-    for pump in pump_list:
-        pump.green.value(0)
+    for Button in Button_list:
+        Button.green.value(0)
     print("Set all green off")
 
 def start_animation():
     print("Start animation")
-    for pump in pump_list:
-        pump.red.value(1)
+    for Button in Button_list:
+        Button.red.value(1)
         utime.sleep(.1)
-        pump.red.value(0)
-        pump.green.value(1)
+        Button.red.value(0)
+        Button.green.value(1)
         utime.sleep(.1)
-        pump.green.value(0)
+        Button.green.value(0)
     print("Finish animation")
 
 # ####  MAIN
