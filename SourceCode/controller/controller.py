@@ -32,7 +32,7 @@ class MqttClient:
                 break
         if not self._wlan.isconnected():
             print("Not possible to connect to internet.")
-    
+
     def disconnect(self):
         try:
             print("Try to disconnect")
@@ -118,7 +118,7 @@ class Controller:
 
         self.button_list = [Button(key, self._controller_gpio[key]["button"],
                                    self._controller_gpio[key]["led"]) for key in self._controller_gpio]
-        
+
     def welcome_animation(self):
         for button in self.button_list:
             button.led.value(1)
@@ -157,7 +157,7 @@ def main():
                     if backend.connection_error_count >= 2:
                         backend.disconnect()
                         backend.mqtt_connect()
-          
+      
 # ####  MAIN
 
 
