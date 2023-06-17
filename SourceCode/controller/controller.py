@@ -15,6 +15,8 @@ class MqttClient:
         self.connect()
         self.mqtt_connect()
 
+        self.connection_error_count = 0
+
     def connect(self):
         print("Connecting...")
         self._wlan.active(True)
@@ -30,6 +32,13 @@ class MqttClient:
                 break
         if not self._wlan.isconnected():
             print("Not possible to connect to internet.")
+    
+    def disconnect(self):
+        try:
+            print("Try to disconnect")
+            self.mqtt_client.disconnect()
+        except Exception as err:
+            print(f"Not possible to disconnect. Reason: {err}")
 
     def sub_cb(self, topic, msg):
         print("New message on topic {}".format(topic.decode('utf-8')))
@@ -48,8 +57,8 @@ class MqttClient:
 
             self.mqtt_client.set_callback(self.sub_cb)
             print("Callback set")
-            for i in range(3):
-                print("MQTT Connection retry: {}/3".format(i+1))
+            for i in range(2):
+                print("MQTT Connection retry: {}/2".format(i+1))
                 status = "N/A"
                 utime.sleep(.5)
                 try:
@@ -71,6 +80,7 @@ class MqttClient:
         except Exception:
             print("Not possible to connect to MQTT!")
 
+
 class Button:
     def __init__(self, button_id: int = 99, button_gpio: int = 99, led_gpio: int = 99):
         self.button_id: int = button_id
@@ -90,20 +100,20 @@ class Button:
 class Controller:
     def __init__(self) -> None:
         self._controller_gpio = {
-            0: {"button": 5,
-                "led": 28},
-            1: {"button": 6,
-                "led": 27},
-            2: {"button": 7,
-                "led": 26},
+            0: {"button": 2,
+                "led": 3},
+            1: {"button": 4,
+                "led": 5},
+            2: {"button": 6,
+                "led": 7},
             3: {"button": 8,
-                "led": 22},
-            4: {"button": 9,
-                "led": 21},
-            5: {"button": 10,
-                "led": 20},
-            6: {"button": 11,
-                "led": 19},
+                "led": 9},
+            4: {"button": 10,
+                "led": 11},
+            5: {"button": 12,
+                "led": 13},
+            6: {"button": 14,
+                "led": 15},
         }
 
         self.button_list = [Button(key, self._controller_gpio[key]["button"],
@@ -121,19 +131,35 @@ controller = Controller()
 backend = MqttClient()
 # ####  GLOBAL FUNCTIONS
 
+
 def set_up():
     global controller
 
     controller.welcome_animation()
+
 
 def main():
     while True:
         for button_item in controller.button_list:
             if not button_item.button.value():
                 button_item.trigger_led()
-                backend.mqtt_client.push("garder/pump{}/activate".format(button_item.button_id))
+                try:
+                    topic = "garder/pump{}".format(button_item.button_id)
+                    msg = "activate"
+                    backend.mqtt_client.publish(topic, msg)
+                    print(f'Sent - Topic: {topic} - Message: {msg}')
+                    utime.sleep(1)
+                except Exception as err:
+                    print(f"Was not possible to send message to the backend because: {err}")
 
+                    backend.connection_error_count += 1
+
+                    if backend.connection_error_count >= 2:
+                        backend.disconnect()
+                        backend.mqtt_connect()
+          
 # ####  MAIN
+
 
 set_up()
 main()
