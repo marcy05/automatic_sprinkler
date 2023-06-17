@@ -4,64 +4,67 @@ import network
 from umqtt.simple import MQTTClient
 from secret import secret
 
+
 class MqttClient:
     def __init__(self):
-        self.wlan = network.WLAN(network.STA_IF)
+        self._wlan = network.WLAN(network.STA_IF)
         self.mqtt_client = MQTTClient
-        self.network_ssid = secret["network_ssid"]
-        self.network_password = secret["network_password"]
-        self.mqtt_server_ip = secret["mqtt_server_ip"]
-        self.client_id = secret["client_id"]
-        self.mqtt_user = secret["mqtt_user"]
-        self.mqtt_password = secret["mqtt_password"]
+
         self.subscribed_tipic = "garden"
 
         self.connect()
         self.mqtt_connect()
-    
+
+        self.connection_error_count = 0
+
     def connect(self):
         print("Connecting...")
-        self.wlan.active(True)
-        self.wlan.connect(self.network_ssid, self.network_password)
+        self._wlan.active(True)
+        self._wlan.connect(secret["network_ssid"], secret["network_password"])
         max_retries = 20
         for i in range(max_retries):
-            if not self.wlan.isconnected():
+            if not self._wlan.isconnected():
                 print("Connection retry {}/{}".format(i+1, max_retries))
                 utime.sleep(1)
             else:
                 print("Connected.")
                 self.network_status = True
                 break
-        if not self.wlan.isconnected():
+        if not self._wlan.isconnected():
             print("Not possible to connect to internet.")
-    
+
+    def disconnect(self):
+        try:
+            print("Try to disconnect")
+            self.mqtt_client.disconnect()
+        except Exception as err:
+            print(f"Not possible to disconnect. Reason: {err}")
+
     def sub_cb(self, topic, msg):
         print("New message on topic {}".format(topic.decode('utf-8')))
         msg = msg.decode('utf-8')
         print(msg)
-    
+
     def mqtt_connect(self):
         print("Connecting to MQTT broker...")
         try:
-            self.mqtt_client = MQTTClient(self.client_id,
-                                          self.mqtt_server_ip,
-                                          user=self.mqtt_user,
-                                          password=self.mqtt_password,
+            self.mqtt_client = MQTTClient(secret["client_id"],
+                                          secret["mqtt_server_ip"],
+                                          user=secret["mqtt_user"],
+                                          password=secret["mqtt_password"],
                                           keepalive=60)
             print("MQTT Client set up")
-            # print("Server: {}\nUser: {}\nPassword: {}".format(self.mqtt_server_ip,
-            #                                                          self.mqtt_user,
-            #                                                          self.mqtt_password))
+
             self.mqtt_client.set_callback(self.sub_cb)
             print("Callback set")
-            for i in range(3):
-                print("MQTT Connection retry: {}/3".format(i+1))
+            for i in range(2):
+                print("MQTT Connection retry: {}/2".format(i+1))
                 status = "N/A"
                 utime.sleep(.5)
                 try:
                     status = self.mqtt_client.connect()
                     break
-                except:
+                except Exception:
                     print("Connection refused: {}".format(status))
                     if i == 2:
                         return False
@@ -70,125 +73,93 @@ class MqttClient:
             try:
                 self.mqtt_client.subscribe(self.subscribed_tipic)
                 print("Tipic subscribed")
-            except:
+            except Exception:
                 print("ERROR - MQTT No subscription possible")
                 return False
             print("MQTT Connection completed.")
-        except:
+        except Exception:
             print("Not possible to connect to MQTT!")
 
-class Pump:
-    def __init__(self, pump_id:int = 99, button_gpio:int = 99, red_gpio:int = 99, green_gpio:int = 99):
-        self.pump_id: int = pump_id
-        self._button_gpio: int = button_gpio
-        self._red_gpio: int = red_gpio
-        self._green_gpio: int = green_gpio
 
-        self.button = machine.Pin(self._button_gpio, machine.Pin.IN, machine.Pin.PULL_UP)
-        self.red = machine.Pin(self._red_gpio, machine.Pin.OUT)
-        self.green = machine.Pin(self._green_gpio, machine.Pin.OUT)
+class Button:
+    def __init__(self, button_id: int = 99, button_gpio: int = 99, led_gpio: int = 99):
+        self.button_id: int = button_id
+        self._button_gpio: int = button_gpio
+        self._led_gpio: int = led_gpio
+
+        self.button = machine.Pin(
+            self._button_gpio, machine.Pin.IN, machine.Pin.PULL_UP)
+        self.led = machine.Pin(self._led_gpio, machine.Pin.OUT)
+
+    def trigger_led(self):
+        self.led.value(1)
+        utime.sleep(.2)
+        self.led.value(0)
+
+
+class Controller:
+    def __init__(self) -> None:
+        self._controller_gpio = {
+            0: {"button": 2,
+                "led": 3},
+            1: {"button": 4,
+                "led": 5},
+            2: {"button": 6,
+                "led": 7},
+            3: {"button": 8,
+                "led": 9},
+            4: {"button": 10,
+                "led": 11},
+            5: {"button": 12,
+                "led": 13},
+            6: {"button": 14,
+                "led": 15},
+        }
+
+        self.button_list = [Button(key, self._controller_gpio[key]["button"],
+                                   self._controller_gpio[key]["led"]) for key in self._controller_gpio]
+
+    def welcome_animation(self):
+        for button in self.button_list:
+            button.led.value(1)
+            utime.sleep(.2)
+            button.led.value(0)
 
 
 # #### GLOBAL VARIABLE
-p0 = Pump(0, 5, 28, 27)
-p1 = Pump(1, 6, 26, 22)
-p2 = Pump(2, 7, 21, 20)
-p3 = Pump(3, 8, 19, 18)
-p4 = Pump(4, 9, 17, 16)
-p5 = Pump(5, 10, 12, 13)
-p6 = Pump(6, 11, 14, 15)
-pump_list = [p0, p1, p2, p3, p4, p5, p6]
-
+controller = Controller()
+backend = MqttClient()
 # ####  GLOBAL FUNCTIONS
 
-def set_on_red():
-    for pump in pump_list:
-        pump.red.value(1)
-    print("Set all red on")
 
-def set_off_red():
-    for pump in pump_list:
-        pump.red.value(0)
-    print("Set all red off")
+def set_up():
+    global controller
 
-def set_on_green():
-    for pump in pump_list:
-        pump.green.value(1)
-    print("Set all green on")
+    controller.welcome_animation()
 
-def set_off_green():
-    for pump in pump_list:
-        pump.green.value(0)
-    print("Set all green off")
 
-def start_animation():
-    print("Start animation")
-    for pump in pump_list:
-        pump.red.value(1)
-        utime.sleep(.1)
-        pump.red.value(0)
-        pump.green.value(1)
-        utime.sleep(.1)
-        pump.green.value(0)
-    print("Finish animation")
+def main():
+    while True:
+        for button_item in controller.button_list:
+            if not button_item.button.value():
+                button_item.trigger_led()
+                try:
+                    topic = "garder/pump{}".format(button_item.button_id)
+                    msg = "activate"
+                    backend.mqtt_client.publish(topic, msg)
+                    print(f'Sent - Topic: {topic} - Message: {msg}')
+                    utime.sleep(1)
+                except Exception as err:
+                    print(f"Was not possible to send message to the backend because: {err}")
 
+                    backend.connection_error_count += 1
+
+                    if backend.connection_error_count >= 2:
+                        backend.disconnect()
+                        backend.mqtt_connect()
+      
 # ####  MAIN
 
-backend = MqttClient()
-set_off_green()
-set_off_red()
-start_animation()
 
-print("Entering infinite loop")
-while False:
-
-    if not p0.button.value():
-        p0.green.value(1)
-        p0.red.value(1)
-        utime.sleep(.5)
-        p0.green.value(0)
-        p0.red.value(0)
-        utime.sleep(.5)
-    if not p1.button.value():
-        p1.green.value(1)
-        p1.red.value(1)
-        utime.sleep(.5)
-        p1.green.value(0)
-        p1.red.value(0)
-        utime.sleep(.5)
-    if not p2.button.value():
-        p2.green.value(1)
-        p2.red.value(1)
-        utime.sleep(.5)
-        p2.green.value(0)
-        p2.red.value(0)
-        utime.sleep(.5)
-    if not p3.button.value():
-        p3.green.value(1)
-        p3.red.value(1)
-        utime.sleep(.5)
-        p3.green.value(0)
-        p3.red.value(0)
-        utime.sleep(.5)
-    if not p4.button.value():
-        p4.green.value(1)
-        p4.red.value(1)
-        utime.sleep(.5)
-        p4.green.value(0)
-        p4.red.value(0)
-        utime.sleep(.5)
-    if not p5.button.value():
-        p5.green.value(1)
-        p5.red.value(1)
-        utime.sleep(.5)
-        p5.green.value(0)
-        p5.red.value(0)
-        utime.sleep(.5)
-    if not p6.button.value():
-        p6.green.value(1)
-        p6.red.value(1)
-        utime.sleep(.5)
-        p6.green.value(0)
-        p6.red.value(0)
-        utime.sleep(.5)
-    utime.sleep(.2)
+set_up()
+main()
