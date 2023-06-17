@@ -1,6 +1,7 @@
 import machine
 import utime
 import network
+import _thread
 from umqtt.simple import MQTTClient
 from secret import secret
 
@@ -12,12 +13,17 @@ class MqttClient:
 
         self.subscribed_tipic = "garden"
 
-        self.connect()
-        self.mqtt_connect()
-
         self.connection_error_count = 0
+        self._wlan_connect = False
+        self._mqtt_connect = False
 
-    def connect(self):
+    def general_connection(self):
+        print("General connection started")
+        self._connect()
+        self.mqtt_connect()
+        print("General connection completed")
+
+    def _connect(self):
         print("Connecting...")
         self._wlan.active(True)
         self._wlan.connect(secret["network_ssid"], secret["network_password"])
@@ -28,7 +34,7 @@ class MqttClient:
                 utime.sleep(1)
             else:
                 print("Connected.")
-                self.network_status = True
+                self._wlan_connect = True
                 break
         if not self._wlan.isconnected():
             print("Not possible to connect to internet.")
@@ -40,7 +46,7 @@ class MqttClient:
         except Exception as err:
             print(f"Not possible to disconnect. Reason: {err}")
 
-    def sub_cb(self, topic, msg):
+    def _sub_cb(self, topic, msg):
         print("New message on topic {}".format(topic.decode('utf-8')))
         msg = msg.decode('utf-8')
         print(msg)
@@ -55,10 +61,11 @@ class MqttClient:
                                           keepalive=60)
             print("MQTT Client set up")
 
-            self.mqtt_client.set_callback(self.sub_cb)
+            self.mqtt_client.set_callback(self._sub_cb)
             print("Callback set")
-            for i in range(2):
-                print("MQTT Connection retry: {}/2".format(i+1))
+            MAX_RETRY = 10
+            for i in range(MAX_RETRY):
+                print("MQTT Connection retry: {}/{}".format(i+1, MAX_RETRY))
                 status = "N/A"
                 utime.sleep(.5)
                 try:
@@ -66,8 +73,9 @@ class MqttClient:
                     break
                 except Exception:
                     print("Connection refused: {}".format(status))
-                    if i == 2:
+                    if i == (MAX_RETRY-1):
                         return False
+            self._mqtt_connect = True
             print("MQTT Connected")
             print("Subscribe...")
             try:
@@ -79,6 +87,21 @@ class MqttClient:
             print("MQTT Connection completed.")
         except Exception:
             print("Not possible to connect to MQTT!")
+
+    def is_connected(self):
+        if self._wlan_connect and self._mqtt_connect:
+            return True
+        return False
+
+    def is_wlan_connected(self):
+        if self._wlan_connect:
+            return True
+        return False
+
+    def is_mqtt_connected(self):
+        if self._mqtt_connect:
+            return True
+        return False
 
 
 class Button:
@@ -119,17 +142,54 @@ class Controller:
         self.button_list = [Button(key, self._controller_gpio[key]["button"],
                                    self._controller_gpio[key]["led"]) for key in self._controller_gpio]
 
+    def set_button_led(self, button_led: int, value: bool):
+        self.button_list[button_led].led.value(value)
+
     def welcome_animation(self):
         for button in self.button_list:
             button.led.value(1)
             utime.sleep(.2)
             button.led.value(0)
 
+    def welcome_animation_wlan_ok(self):
+        self.button_list[0].led.value(1)
+        for button in self.button_list[1:]:
+            button.led.value(1)
+            utime.sleep(.2)
+            button.led.value(0)
+
+    def switch_off_leds(self):
+        for button in self.button_list:
+            button.led.value(0)
+
 
 # #### GLOBAL VARIABLE
 controller = Controller()
+utime.sleep(1)
 backend = MqttClient()
+
+def animation_hadling():
+    global controller, backend
+
+    while not backend.is_connected():
+        if not backend.is_wlan_connected:
+            controller.welcome_animation()
+        else:
+            controller.welcome_animation_wlan_ok()
+
+    if backend.is_connected():
+        controller.set_button_led(1, True)
+        utime.sleep(1.5)
+        controller.switch_off_leds()
+
+
+_thread.start_new_thread(animation_hadling, ())
+backend.general_connection()
+
 # ####  GLOBAL FUNCTIONS
+
+
+
 
 
 def set_up():
@@ -157,9 +217,9 @@ def main():
                     if backend.connection_error_count >= 2:
                         backend.disconnect()
                         backend.mqtt_connect()
-      
+
 # ####  MAIN
 
 
-set_up()
+#set_up()
 main()
