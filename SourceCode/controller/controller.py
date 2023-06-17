@@ -162,15 +162,12 @@ class Controller:
         for button in self.button_list:
             button.led.value(0)
 
+# ####  GLOBAL FUNCTIONS
 
-# #### GLOBAL VARIABLE
-controller = Controller()
-utime.sleep(1)
-backend = MqttClient()
 
 def animation_hadling():
     global controller, backend
-
+    print("Connection monitoring started")
     while not backend.is_connected():
         if not backend.is_wlan_connected:
             controller.welcome_animation()
@@ -181,21 +178,19 @@ def animation_hadling():
         controller.set_button_led(1, True)
         utime.sleep(1.5)
         controller.switch_off_leds()
-
-
-_thread.start_new_thread(animation_hadling, ())
-backend.general_connection()
-
-# ####  GLOBAL FUNCTIONS
-
-
-
+        print("All connected")
+    else:
+        print("Was not possible to connect to the backend properly")
 
 
 def set_up():
-    global controller
+    global controller, backend
 
-    controller.welcome_animation()
+    controller = Controller()
+    backend = MqttClient()
+
+    _thread.start_new_thread(animation_hadling, ())
+    backend.general_connection()
 
 
 def main():
@@ -221,5 +216,5 @@ def main():
 # ####  MAIN
 
 
-#set_up()
+set_up()
 main()
