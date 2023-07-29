@@ -259,17 +259,23 @@ class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
         self.status = False
-        self.activation_period = 2  # Value in seconds
-    
+        self._activation_period = 2   # Value in seconds
+
+    def set_activation_period(self, activation_perdiod: float) -> None:
+        self._activation_period = activation_perdiod
+
+    def get_activation_period(self) -> float:
+        return self._activation_period
+
     def get_db_data(self) -> dict:
         data = {"Pump{}Status".format(self.pump_id): self.status,
                 "Pump{}ActPeriod".format(self.pump_id): self.activation_period}
         return data
-    
+
     def get_db_status(self) -> dict:
         data = {"Pump{}Status".format(self.pump_id): self.status}
         return data
-    
+
     def get_db_Act_period(self) -> dict:
         data = {"Pump{}ActPeriod".format(self.pump_id): self.activation_period}
         return data
@@ -283,7 +289,7 @@ class Pump:
     def watering(self):
         self.set_pump_value(True)
         self.status = True
-        utime.sleep(self.activation_period)
+        utime.sleep(self.get_activation_period())
         self.set_pump_value(False)
         self.status = False
 
