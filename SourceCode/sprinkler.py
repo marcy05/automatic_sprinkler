@@ -2,9 +2,9 @@ import utime
 import network
 import machine
 import time
-from my_secret import secret
+from src.my_secret import secret
 from umqtt.simple import MQTTClient
-import my_ntp
+import src.lib.my_ntp as my_ntp
 import json
 import _thread
 
@@ -269,7 +269,7 @@ class Pump:
 
     def get_db_data(self) -> dict:
         data = {"Pump{}Status".format(self.pump_id): self.status,
-                "Pump{}ActPeriod".format(self.pump_id): self.activation_period}
+                "Pump{}ActPeriod".format(self.pump_id): self.get_activation_period()}
         return data
 
     def get_db_status(self) -> dict:
@@ -277,7 +277,7 @@ class Pump:
         return data
 
     def get_db_Act_period(self) -> dict:
-        data = {"Pump{}ActPeriod".format(self.pump_id): self.activation_period}
+        data = {"Pump{}ActPeriod".format(self.pump_id): self.get_activation_period()}
         return data
 
     def set_pump_value(self, signal: bool):
@@ -338,8 +338,6 @@ class Garden:
     def __init__(self) -> None:
         logger.debug("Init Gerden...")
         self.start_time = utime.time()
-        self.last_execution_time = utime.time()
-        self.last_logging_time = utime.time()
 
         self.watering_timer = utime.time()
         self.daily_watering_done = False
@@ -350,31 +348,32 @@ class Garden:
 
         self.back_sync_timer = utime.time()
         self.back_sync_period = 60 * 60  # Period of time for backend sync
-        self.back_sync_period = 1.2  # TODO erase for real application
-
-        self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
+        self.back_sync_period = 10  # TODO erase for real application
 
         self.sensor_reading_timer = utime.time()
         self.sensor_reading_period = 20 * 60  # Sensor reading period
         self.sensor_reading_period = 10  # TODO erase this for real application
-
+        logger.debug("[ok] timers and period initialized")
         # self.exec_update_interval = 5  # Time in seconds
         # self.log_update_interval = 50  # Time in seconds
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
 
-        logger.debug("Init completed.")
+        logger.debug("[ok] pumps and sensors initialized")
 
         self.backend = BackEndInterface()
+        logger.debug("[ok] backend initialized")
+
+        self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
+
+        logger.debug("[ok] Init completed.")
 
     def init_timers(self):
         # This functions allows to sync all timers after that the NTP sync
         #   has properly set the RTC time.
         init_time = utime.time()
         self.start_time = init_time
-        self.last_execution_time = init_time
-        self.last_logging_time = init_time
         self.watering_timer = init_time
         self.back_sync_timer = init_time
         self.sensor_reading_timer = init_time
@@ -391,20 +390,6 @@ class Garden:
         if month > 5 and month < 10:
             if hour >= 19:
                 return True
-
-    def _is_running_update_time_expired(self):
-        if (utime.time() - self.last_execution_time) >= \
-                self.exec_update_interval:
-            self.last_execution_time = utime.time()
-            return True
-        return False
-
-    def _is_logging_update_time_expired(self):
-        if (utime.time() - self.last_logging_time) >= \
-                self.log_update_interval:
-            self.last_logging_time = utime.time()
-            return True
-        return False
 
     def is_watering_moment(self):
         if not self.daily_watering_done:
@@ -461,7 +446,12 @@ class Garden:
 
     def send_data_to_back(self):
         logger.debug("Collecting data...")
-        str_data = self._dict_2_str(self._collect_data())
+        if self.backend.mqtt_status:
+            str_data = self._dict_2_str(self._collect_data())
+            logger.debug("[ok] data collected")
+        else:
+            logger.debug("No mqtt registered, data collection skipped.")
+
         if self.backend.mqtt_status:
             self.backend.mqtt_client.publish("garden/status", str_data)
             logger.debug("MQTT - Pump status sent")
@@ -484,7 +474,7 @@ class Garden:
                     self.send_data_to_back()
                     self.back_sync_timer = utime.time()
             except AttributeError as e:
-                logger.error("Thread error! Exception: \n{}".format(e))
+                logger.error("Thread error! Exception: {}".format(e))
                 utime.sleep(2)
             except Exception:
                 utime.sleep(2)
