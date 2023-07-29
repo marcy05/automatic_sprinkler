@@ -6,6 +6,7 @@
 
 # Files
 *secret*
+!SourceCode/src/my_secret.py.template
 
 SourceCode/Scripts/pass_applier_remover.py
 
