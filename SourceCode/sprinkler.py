@@ -1,345 +1,18 @@
 import utime
-import network
-import machine
-import time
-from my_secret import secret
-from umqtt.simple import MQTTClient
-import my_ntp
 import json
 import _thread
+
+from src.simple_logger import SimpleLogger
+from src.backend import BackEndInterface
+from src.hw_interface import HwInterface, Sensor, Pump
 
 # #############################################################################
 #                               CLASSES
 # #############################################################################
-
-
-class SimpleLogger:
-    def debug(self, message: str):
-        current_time = utime.gmtime(utime.time())
-        formatted_date = "{}/{}/{} - {}:{}:{}".format(current_time[0],
-                                                      current_time[1],
-                                                      current_time[2],
-                                                      current_time[3],
-                                                      current_time[4],
-                                                      current_time[5])
-        print("{} - DEBUG - {}".format(formatted_date,
-                                       message))
-
-    def info(self, message: str):
-        current_time = utime.gmtime(utime.time())
-        formatted_date = "{}/{}/{} - {}:{}:{}".format(current_time[0],
-                                                      current_time[1],
-                                                      current_time[2],
-                                                      current_time[3],
-                                                      current_time[4],
-                                                      current_time[5])
-        print("{} - INFO - {}".format(formatted_date,
-                                      message))
-
-    def warning(self, message: str):
-        current_time = utime.gmtime(utime.time())
-        formatted_date = "{}/{}/{} - {}:{}:{}".format(current_time[0],
-                                                      current_time[1],
-                                                      current_time[2],
-                                                      current_time[3],
-                                                      current_time[4],
-                                                      current_time[5])
-        print("{} - WARNING - {}".format(formatted_date,
-                                         message))
-
-    def error(self, message: str):
-        current_time = utime.gmtime(utime.time())
-        formatted_date = "{}/{}/{} - {}:{}:{}".format(current_time[0],
-                                                      current_time[1],
-                                                      current_time[2],
-                                                      current_time[3],
-                                                      current_time[4],
-                                                      current_time[5])
-        print("{} - ERROR - {}".format(formatted_date,
-                                       message))
-
-
-class BackEndInterface:
-    def __init__(self) -> None:
-        logger.debug("Init Backend interface")
-        self.network_status = False
-        self.network_ssid = ""
-        self.network_password = ""
-        self.ntp_sync_done = False
-        self.mqtt_server_ip = ""
-        self.client_id = ""
-        self.mqtt_user = ""
-        self.mqtt_password = ""
-        self.mqtt_client = MQTTClient
-        self.mqtt_status = False
-        self.subscribed_tipic = "garden"
-
-        self.wlan = network.WLAN(network.STA_IF)
-
-        init_result = self._init_secret()
-
-        if init_result:
-            logger.debug("Backend interface correctly init.")
-        else:
-            logger.error("Not possible to init the Backend interface.")
-        logger.debug("Init Backend finished.")
-
-    def _init_secret(self) -> bool:
-        try:
-            self.network_ssid = secret["network_ssid"]
-            self.network_password = secret["network_password"]
-            self.mqtt_server_ip = secret["mqtt_server_ip"]
-            self.client_id = secret["client_id"]
-            self.mqtt_user = secret["mqtt_user"]
-            self.mqtt_password = secret["mqtt_password"]
-            return True
-        except Exception:
-            logger.error("Not possible to find secret file.")
-            return False
-
-    def init(self):
-        self.connect()
-        self.set_correct_time()
-        self.mqtt_connect()  # TODO uncomment for MQTT iteraction
-
-    def connect(self):
-        logger.debug("Connecting...")
-        self.wlan.active(True)
-        self.wlan.connect(self.network_ssid, self.network_password)
-        max_retries = 20
-        for i in range(max_retries):
-            if not self.wlan.isconnected():
-                logger.debug("Connection retry {}/{}".format(i + 1, max_retries))
-                utime.sleep(1)
-            else:
-                logger.debug("Connected.")
-                self.network_status = True
-                break
-        if not self.wlan.isconnected():
-            logger.error("Not possible to connect to internet.")
-
-    def sub_cb(self, topic, msg):
-        logger.debug("New message on topic {}".format(topic.decode('utf-8')))
-        msg = msg.decode('utf-8')
-        logger.debug(msg)
-
-    def mqtt_connect(self):
-        logger.debug("Connecting to MQTT broker...")
-        try:
-            self.mqtt_client = MQTTClient(self.client_id,
-                                          self.mqtt_server_ip,
-                                          user=self.mqtt_user,
-                                          password=self.mqtt_password,
-                                          keepalive=60)
-            logger.debug("MQTT Client set up")
-            logger.debug("Server: {}\nUser: {}\nPassword: {}".format(self.mqtt_server_ip,
-                                                                     self.mqtt_user,
-                                                                     self.mqtt_password))
-            self.mqtt_client.set_callback(self.sub_cb)
-            logger.debug("Callback set")
-            for i in range(3):
-                logger.debug("MQTT Connection retry: {}/3".format(i + 1))
-                status = "N/A"
-                time.sleep(1)
-                try:
-                    status = self.mqtt_client.connect()
-                    break
-                except Exception:
-                    logger.warning("Connection refused: {}".format(status))
-                    self.mqtt_status = False
-                    return False
-            logger.debug("Connected")
-            self.mqtt_status = True
-            logger.debug("Updated mqtt status")
-            self.mqtt_client.subscribe(self.subscribed_tipic)
-            logger.debug("Tipic subscribed")
-            logger.debug("Connected to MQTT.")
-        except Exception:
-            logger.warning("Not possible to connect to MQTT!")
-
-    def publish_to_topic(self, topic: str, msg: str):
-        if self.mqtt_status:
-            logger.debug("Publishing message...")
-            self.mqtt_client.publish(topic, msg)
-            logger.debug("Done")
-
-    def set_correct_time(self):
-        if self.network_status:
-            if self.wlan.isconnected():
-                try:
-                    TIME_SHIFT = 2
-                    my_ntp.settime(TIME_SHIFT)
-                    self.ntp_sync_done = True
-                    logger.debug("NTP time set: {}".format(time.localtime()))
-                except Exception:
-                    logger.warning("Not possible to set global time")
-
-
-class HwInterface:
-    def __init__(self) -> None:
-        self.mux_channels_used = 7
-
-        self.__pump_sig = 10
-        self.__pump_s3 = 11
-        self.__pump_s2 = 12
-        self.__pump_s1 = 13
-        self.__pump_s0 = 15
-
-        self.__sensor_sig = 26
-        self.__sensor_s3 = 18
-        self.__sensor_s2 = 19
-        self.__sensor_s1 = 20
-        self.__sensor_s0 = 21
-
-        self.d_s0 = machine.Pin(self.__pump_s0, machine.Pin.OUT)
-        self.d_s1 = machine.Pin(self.__pump_s1, machine.Pin.OUT)
-        self.d_s2 = machine.Pin(self.__pump_s2, machine.Pin.OUT)
-        self.d_s3 = machine.Pin(self.__pump_s3, machine.Pin.OUT)
-        self.d_sig = machine.Pin(self.__pump_sig, machine.Pin.OUT)
-
-        self.a_s0 = machine.Pin(self.__sensor_s0, machine.Pin.OUT)
-        self.a_s1 = machine.Pin(self.__sensor_s1, machine.Pin.OUT)
-        self.a_s2 = machine.Pin(self.__sensor_s2, machine.Pin.OUT)
-        self.a_s3 = machine.Pin(self.__sensor_s3, machine.Pin.OUT)
-        self.a_sig = machine.ADC(self.__sensor_sig)
-
-        self.multiplex_selector = [(0, 0, 0, 0),
-                                   (1, 0, 0, 0),
-                                   (0, 1, 0, 0),
-                                   (1, 1, 0, 0),
-                                   (0, 0, 1, 0),
-                                   (1, 0, 1, 0),
-                                   (0, 1, 1, 0),
-                                   (1, 1, 1, 0),
-                                   (0, 0, 0, 1),
-                                   (1, 0, 0, 1),
-                                   (0, 1, 0, 1),
-                                   (1, 1, 0, 1),
-                                   (0, 0, 1, 1),
-                                   (1, 0, 1, 1),
-                                   (0, 1, 1, 1),
-                                   (1, 1, 1, 1)]
-
-    def reset_digital_mux(self):
-        logger.debug("HwInterface - Resetting all relays...")
-        for channel in range(self.mux_channels_used):
-            self.d_s0.value(self.multiplex_selector[channel][0])
-            self.d_s1.value(self.multiplex_selector[channel][1])
-            self.d_s2.value(self.multiplex_selector[channel][2])
-            self.d_s3.value(self.multiplex_selector[channel][3])
-            self.d_sig.value(False)
-        logger.debug("HwInterface - Reset done.")
-
-    def set_channel_value(self, channel: int, signal: bool):
-        logger.debug("HwInterface - Channel: {} with Value: {}".format(channel,
-                                                                       signal))
-        self.d_s0.value(self.multiplex_selector[channel][0])
-        self.d_s1.value(self.multiplex_selector[channel][1])
-        self.d_s2.value(self.multiplex_selector[channel][2])
-        self.d_s3.value(self.multiplex_selector[channel][3])
-        self.d_sig.value(signal)
-
-    def _read_u16(self, adc_read: int) -> float:
-        """
-        Convert the Vdigit to Volt value from ADC.
-        """
-        return adc_read * 3.3 / 65535
-
-    def get_analog_from_mux(self, channel: int) -> float:
-        logger.debug("HwInterface - Channel: {} reading...".format(channel))
-        self.a_s0.value(self.multiplex_selector[channel][0])
-        self.a_s1.value(self.multiplex_selector[channel][1])
-        self.a_s2.value(self.multiplex_selector[channel][2])
-        self.a_s3.value(self.multiplex_selector[channel][3])
-        volt = self._read_u16(self.a_sig.read_u16())
-        return volt
-
-
-class Pump:
-    def __init__(self, pump_id: int) -> None:
-        self.pump_id = pump_id
-        self.status = False
-        self._activation_period = 2   # Value in seconds
-
-    def set_activation_period(self, activation_perdiod: float) -> None:
-        self._activation_period = activation_perdiod
-
-    def get_activation_period(self) -> float:
-        return self._activation_period
-
-    def get_db_data(self) -> dict:
-        data = {"Pump{}Status".format(self.pump_id): self.status,
-                "Pump{}ActPeriod".format(self.pump_id): self.activation_period}
-        return data
-
-    def get_db_status(self) -> dict:
-        data = {"Pump{}Status".format(self.pump_id): self.status}
-        return data
-
-    def get_db_Act_period(self) -> dict:
-        data = {"Pump{}ActPeriod".format(self.pump_id): self.activation_period}
-        return data
-
-    def set_pump_value(self, signal: bool):
-        logger.debug("Pump: {}, setting value: {}".format(self.pump_id,
-                                                          signal))
-        hw_interface = HwInterface()
-        hw_interface.set_channel_value(self.pump_id, signal)
-
-    def watering(self):
-        self.set_pump_value(True)
-        self.status = True
-        utime.sleep(self.get_activation_period())
-        self.set_pump_value(False)
-        self.status = False
-
-
-class Sensor:
-    def __init__(self, sensor_id: int) -> None:
-        self.sensor_id = sensor_id
-        self.status = True
-        self.active_threshold = 0.1
-        self.current_value = 0.0
-
-        self._check_activation()
-
-    def _check_activation(self):
-        hw_interface = HwInterface()
-        sensor_value = hw_interface.get_analog_from_mux(self.sensor_id)
-        self.status = True if sensor_value >= self.active_threshold else False
-
-    def get_voltage(self):
-        if self.status:
-            hw_interface = HwInterface()
-            self.current_value = hw_interface.get_analog_from_mux(self.sensor_id)
-            return self.current_value
-        else:
-            return 0
-
-    def get_db_data(self) -> dict:
-        data = {"Sensor{}Status".format(self.sensor_id): self.status,
-                "Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold,
-                "Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
-        return data
-
-    def get_db_status(self) -> dict:
-        data = {"Sensor{}Status".format(self.sensor_id): self.status}
-        return data
-
-    def get_db_actThreshold(self) -> dict:
-        data = {"Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold}
-        return data
-
-    def get_db_current_val(self) -> dict:
-        data = {"Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
-        return data
-
 class Garden:
     def __init__(self) -> None:
         logger.debug("Init Gerden...")
         self.start_time = utime.time()
-        self.last_execution_time = utime.time()
-        self.last_logging_time = utime.time()
 
         self.watering_timer = utime.time()
         self.daily_watering_done = False
@@ -350,31 +23,32 @@ class Garden:
 
         self.back_sync_timer = utime.time()
         self.back_sync_period = 60 * 60  # Period of time for backend sync
-        self.back_sync_period = 1.2  # TODO erase for real application
-
-        self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
+        self.back_sync_period = 10  # TODO erase for real application
 
         self.sensor_reading_timer = utime.time()
         self.sensor_reading_period = 20 * 60  # Sensor reading period
         self.sensor_reading_period = 10  # TODO erase this for real application
-
+        logger.debug("[ok] timers and period initialized")
         # self.exec_update_interval = 5  # Time in seconds
         # self.log_update_interval = 50  # Time in seconds
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
 
-        logger.debug("Init completed.")
+        logger.debug("[ok] pumps and sensors initialized")
 
         self.backend = BackEndInterface()
+        logger.debug("[ok] backend initialized")
+
+        self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
+
+        logger.debug("[ok] Init completed.")
 
     def init_timers(self):
         # This functions allows to sync all timers after that the NTP sync
         #   has properly set the RTC time.
         init_time = utime.time()
         self.start_time = init_time
-        self.last_execution_time = init_time
-        self.last_logging_time = init_time
         self.watering_timer = init_time
         self.back_sync_timer = init_time
         self.sensor_reading_timer = init_time
@@ -391,20 +65,6 @@ class Garden:
         if month > 5 and month < 10:
             if hour >= 19:
                 return True
-
-    def _is_running_update_time_expired(self):
-        if (utime.time() - self.last_execution_time) >= \
-                self.exec_update_interval:
-            self.last_execution_time = utime.time()
-            return True
-        return False
-
-    def _is_logging_update_time_expired(self):
-        if (utime.time() - self.last_logging_time) >= \
-                self.log_update_interval:
-            self.last_logging_time = utime.time()
-            return True
-        return False
 
     def is_watering_moment(self):
         if not self.daily_watering_done:
@@ -461,7 +121,12 @@ class Garden:
 
     def send_data_to_back(self):
         logger.debug("Collecting data...")
-        str_data = self._dict_2_str(self._collect_data())
+        if self.backend.mqtt_status:
+            str_data = self._dict_2_str(self._collect_data())
+            logger.debug("[ok] data collected")
+        else:
+            logger.debug("No mqtt registered, data collection skipped.")
+
         if self.backend.mqtt_status:
             self.backend.mqtt_client.publish("garden/status", str_data)
             logger.debug("MQTT - Pump status sent")
@@ -484,7 +149,7 @@ class Garden:
                     self.send_data_to_back()
                     self.back_sync_timer = utime.time()
             except AttributeError as e:
-                logger.error("Thread error! Exception: \n{}".format(e))
+                logger.error("Thread error! Exception: {}".format(e))
                 utime.sleep(2)
             except Exception:
                 utime.sleep(2)
