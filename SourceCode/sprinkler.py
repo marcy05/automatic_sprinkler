@@ -93,7 +93,7 @@ class BackEndInterface:
             self.mqtt_user = secret["mqtt_user"]
             self.mqtt_password = secret["mqtt_password"]
             return True
-        except:
+        except Exception:
             logger.error("Not possible to find secret file.")
             return False
 
@@ -109,7 +109,7 @@ class BackEndInterface:
         max_retries = 20
         for i in range(max_retries):
             if not self.wlan.isconnected():
-                logger.debug("Connection retry {}/{}".format(i+1, max_retries))
+                logger.debug("Connection retry {}/{}".format(i + 1, max_retries))
                 utime.sleep(1)
             else:
                 logger.debug("Connected.")
@@ -138,13 +138,13 @@ class BackEndInterface:
             self.mqtt_client.set_callback(self.sub_cb)
             logger.debug("Callback set")
             for i in range(3):
-                logger.debug("MQTT Connection retry: {}/3".format(i+1))
+                logger.debug("MQTT Connection retry: {}/3".format(i + 1))
                 status = "N/A"
                 time.sleep(1)
                 try:
                     status = self.mqtt_client.connect()
                     break
-                except:
+                except Exception:
                     logger.warning("Connection refused: {}".format(status))
                     self.mqtt_status = False
                     return False
@@ -154,7 +154,7 @@ class BackEndInterface:
             self.mqtt_client.subscribe(self.subscribed_tipic)
             logger.debug("Tipic subscribed")
             logger.debug("Connected to MQTT.")
-        except:
+        except Exception:
             logger.warning("Not possible to connect to MQTT!")
 
     def publish_to_topic(self, topic: str, msg: str):
@@ -171,7 +171,7 @@ class BackEndInterface:
                     my_ntp.settime(TIME_SHIFT)
                     self.ntp_sync_done = True
                     logger.debug("NTP time set: {}".format(time.localtime()))
-                except:
+                except Exception:
                     logger.warning("Not possible to set global time")
 
 
@@ -315,21 +315,21 @@ class Sensor:
             return self.current_value
         else:
             return 0
-    
+
     def get_db_data(self) -> dict:
         data = {"Sensor{}Status".format(self.sensor_id): self.status,
                 "Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold,
                 "Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
         return data
-    
+
     def get_db_status(self) -> dict:
         data = {"Sensor{}Status".format(self.sensor_id): self.status}
         return data
-    
+
     def get_db_actThreshold(self) -> dict:
         data = {"Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold}
         return data
-    
+
     def get_db_current_val(self) -> dict:
         data = {"Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
         return data
@@ -358,8 +358,8 @@ class Garden:
         self.sensor_reading_period = 20 * 60  # Sensor reading period
         self.sensor_reading_period = 10  # TODO erase this for real application
 
-        #self.exec_update_interval = 5  # Time in seconds
-        #self.log_update_interval = 50  # Time in seconds
+        # self.exec_update_interval = 5  # Time in seconds
+        # self.log_update_interval = 50  # Time in seconds
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
@@ -369,7 +369,7 @@ class Garden:
         self.backend = BackEndInterface()
 
     def init_timers(self):
-        # This functions allows to sync all timers after that the NTP sync 
+        # This functions allows to sync all timers after that the NTP sync
         #   has properly set the RTC time.
         init_time = utime.time()
         self.start_time = init_time
@@ -424,7 +424,7 @@ class Garden:
 
     def pump_cycle(self):
         for iteration in range(self.watering_iterations):
-            logger.debug("Watering iteration: {}/{}".format(iteration+1, self.watering_iterations))
+            logger.debug("Watering iteration: {}/{}".format(iteration + 1, self.watering_iterations))
             for pump in self.pumps:
                 pump.watering()
             utime.sleep(self.watering_itersations_delay)
@@ -434,13 +434,13 @@ class Garden:
             logger.debug("Backend sync time")
             return True
         return False
-    
+
     def _collect_data(self) -> dict:
         data_dict = {}
-        
+
         for pump in self.pumps:
             data_dict["Plant{}".format(pump.pump_id)] = pump.get_db_data()
-        
+
         for sensor in self.sensors:
             plant = data_dict["Plant{}".format(sensor.sensor_id)]
             sensor_data = sensor.get_db_data()
@@ -455,7 +455,7 @@ class Garden:
                 just_value[key] = data[key]
 
         return just_value
-    
+
     def _dict_2_str(self, conv_data: dict) -> str:
         return json.dumps(conv_data)
 
@@ -476,7 +476,7 @@ class Garden:
         for i in range(len(self.sensors)):
             sensor_value = self.sensors[i].get_voltage()
             logger.debug("Sensor: {} -> Voltage: {}".format(i, sensor_value))
-    
+
     def thread_backend_sync(self):
         while True:
             try:
@@ -486,7 +486,7 @@ class Garden:
             except AttributeError as e:
                 logger.error("Thread error! Exception: \n{}".format(e))
                 utime.sleep(2)
-            except:
+            except Exception:
                 utime.sleep(2)
                 pass
 
