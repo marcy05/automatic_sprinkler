@@ -35,15 +35,16 @@ The Repository is structure so that:
 |9|Pin header connector female|Some|10|[Link](https://www.amazon.it/Headers-Breakaway-Connector-Prototype-intestazione/dp/B07CC4V9ZY/ref=sr_1_1?keywords=2%2C54+female&qid=1690740762&sr=8-1)|
 |10|DC connector DC-0055.5x2.1mm|1|0,10|[Link](https://it.aliexpress.com/item/1005001688314286.html?spm=a2g0o.order_list.order_list_main.12.12bd3696ZkNGgU&gatewayAdapt=glo2ita)|
 |11|Power supply 5V 2A|1|7,00|[Link](https://www.amazon.it/gp/product/B09DSWL12H/ref=ewc_pr_img_1?smid=A1LPCHZ6DX1HO3&psc=1)|
-|12|(optional) Led green|2|n/a|[Link](https://www.amazon.it/gp/product/B07DPJ23YT/ref=ewc_pr_img_1?smid=A3BZ3PT9ZR43MC&psc=1)|
-|13|(optional) Box case|1|n/a|[3d_file](3d_files/case_half1.STL)|
-|14|(optional) Box case cover|1|n/a|[3d_file](3d_files/case_half2.STL)|
-|15|Water frame buffer|1|n/a|[3d_file](3d_files/frame_buffer.STL)|
-|16|Water frame buffer top|1|n/a|[3d_file](3d_files/frame_buffer_top.STL)|
-|17|Pump holders|2|n/a|[3d_file](3d_files/pump_buffer.STL)|
-|18|Holder top|2|n/a|[3d_file](3d_files/holder_top.STL)|
-|19|Relay support|2|n/a|[3d_file](3d_files/support_relay.STL)|
-|20|(optional) PCB to be printed|1|n/a|[PCB](Board/Schematic_Automatic_Sprinkler_2023-07-30.pdf)|
+|12|Power switch 5V|1|n/a|[Link](https://www.amazon.it/gp/product/B07J4KB38W/ref=ewc_pr_img_1?smid=A3BZ3PT9ZR43MC&psc=1)|
+|13|(optional) Led green|2|n/a|[Link](https://www.amazon.it/gp/product/B07DPJ23YT/ref=ewc_pr_img_1?smid=A3BZ3PT9ZR43MC&psc=1)|
+|14|(optional) Box case|1|n/a|[3d_file](3d_files/case_half1.STL)|
+|15|(optional) Box case cover|1|n/a|[3d_file](3d_files/case_half2.STL)|
+|16|Water frame buffer|1|n/a|[3d_file](3d_files/frame_buffer.STL)|
+|17|Water frame buffer top|1|n/a|[3d_file](3d_files/frame_buffer_top.STL)|
+|18|Pump holders|2|n/a|[3d_file](3d_files/pump_buffer.STL)|
+|19|Holder top|2|n/a|[3d_file](3d_files/holder_top.STL)|
+|20|Relay support|2|n/a|[3d_file](3d_files/support_relay.STL)|
+|21|(optional) PCB to be printed|1|n/a|[PCB](Board/Schematic_Automatic_Sprinkler_2023-07-30.pdf)|
 
 
 ## Software
