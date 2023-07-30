@@ -1,15 +1,16 @@
 # #############################################################################
 #                               IMPORT
 # #############################################################################
-import machine
+import os
 import utime
+import machine
 
-from src.simple_logger import SimpleLogger
+from src.simple_logger import SimpleLogger, LogLevels
 
 # #############################################################################
 #                          GLOBAL VARIABLES
 # #############################################################################
-logger = SimpleLogger()
+logger = SimpleLogger(LogLevels.INFO)
 
 # #############################################################################
 #                               CLASSES
@@ -61,17 +62,17 @@ class HwInterface:
                                    (1, 1, 1, 1)]
 
     def reset_digital_mux(self):
-        logger.debug("HwInterface - Resetting all relays...")
+        logger.debug(f"{self.__class__.__name__} - Start resetting all relays...")
         for channel in range(self.mux_channels_used):
             self.d_s0.value(self.multiplex_selector[channel][0])
             self.d_s1.value(self.multiplex_selector[channel][1])
             self.d_s2.value(self.multiplex_selector[channel][2])
             self.d_s3.value(self.multiplex_selector[channel][3])
             self.d_sig.value(False)
-        logger.debug("HwInterface - Reset done.")
+        logger.info(f"{self.__class__.__name__} - Reset relays done.")
 
     def set_channel_value(self, channel: int, signal: bool):
-        logger.debug("HwInterface - Channel: {} with Value: {}".format(channel, signal))
+        logger.debug(f"{self.__class__.__name__} - Channel: {channel} with Value: {signal}")
         self.d_s0.value(self.multiplex_selector[channel][0])
         self.d_s1.value(self.multiplex_selector[channel][1])
         self.d_s2.value(self.multiplex_selector[channel][2])
@@ -85,7 +86,7 @@ class HwInterface:
         return adc_read * 3.3 / 65535
 
     def get_analog_from_mux(self, channel: int) -> float:
-        logger.debug("HwInterface - Channel: {} reading...".format(channel))
+        logger.debug(f"{self.__class__.__name__} - Channel: {channel} reading...")
         self.a_s0.value(self.multiplex_selector[channel][0])
         self.a_s1.value(self.multiplex_selector[channel][1])
         self.a_s2.value(self.multiplex_selector[channel][2])
@@ -101,6 +102,7 @@ class Pump:
 
     def set_activation_period(self, activation_perdiod: float) -> None:
         self._activation_period = activation_perdiod
+        logger.info(f"{self.__class__.__name__} - Pump:{self.pump_id} - Activation period updated to:{self._activation_period}")
 
     def get_activation_period(self) -> float:
         return self._activation_period
@@ -119,17 +121,18 @@ class Pump:
         return data
 
     def set_pump_value(self, signal: bool):
-        logger.debug("Pump: {}, setting value: {}".format(self.pump_id,
-                                                          signal))
+        logger.debug(f"{self.__class__.__name__}: {self.pump_id}, setting value: {signal}")
         hw_interface = HwInterface()
         hw_interface.set_channel_value(self.pump_id, signal)
 
     def watering(self):
+        logger.info(f"{self.__class__.__name__} - Watering period started")
         self.set_pump_value(True)
         self.status = True
         utime.sleep(self.get_activation_period())
         self.set_pump_value(False)
         self.status = False
+        logger.info(f"{self.__class__.__name__} - Watering period finished")
 
 
 class Sensor:
@@ -155,19 +158,20 @@ class Sensor:
             return 0
 
     def get_db_data(self) -> dict:
-        data = {"Sensor{}Status".format(self.sensor_id): self.status,
-                "Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold,
-                "Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
+        logger.info(f"{self.__class__.__name__} - get sensors data")
+        data = {f"Sensor{self.sensor_id}Status": self.status,
+                f"Sensor{self.sensor_id}ActThreshold": self.active_threshold,
+                f"Sensor{self.sensor_id}CurrentValue": self.current_value}
         return data
 
     def get_db_status(self) -> dict:
-        data = {"Sensor{}Status".format(self.sensor_id): self.status}
+        data = {f"Sensor{self.sensor_id}Status": self.status}
         return data
 
     def get_db_actThreshold(self) -> dict:
-        data = {"Sensor{}ActThreshold".format(self.sensor_id): self.active_threshold}
+        data = {f"Sensor{self.sensor_id}ActThreshold": self.active_threshold}
         return data
 
     def get_db_current_val(self) -> dict:
-        data = {"Sensor{}CurrentValue".format(self.sensor_id): self.current_value}
+        data = {f"Sensor{self.sensor_id}CurrentValue": self.current_value}
         return data
