@@ -71,8 +71,7 @@ class HwInterface:
         logger.debug("HwInterface - Reset done.")
 
     def set_channel_value(self, channel: int, signal: bool):
-        logger.debug("HwInterface - Channel: {} with Value: {}".format(channel,
-                                                                       signal))
+        logger.debug("HwInterface - Channel: {} with Value: {}".format(channel, signal))
         self.d_s0.value(self.multiplex_selector[channel][0])
         self.d_s1.value(self.multiplex_selector[channel][1])
         self.d_s2.value(self.multiplex_selector[channel][2])

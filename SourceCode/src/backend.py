@@ -1,13 +1,22 @@
+# #############################################################################
+#                               IMPORT
+# #############################################################################
+import time
 import network
 from umqtt.simple import MQTTClient
-import time
 
 import src.lib.my_ntp as my_ntp
 from src.my_secret import secret
 from src.simple_logger import SimpleLogger
 
+# #############################################################################
+#                          GLOBAL VARIABLES
+# #############################################################################
 logger = SimpleLogger()
 
+# #############################################################################
+#                               CLASSES
+# #############################################################################
 class BackEndInterface:
     def __init__(self) -> None:
         logger.debug("Init Backend interface")
