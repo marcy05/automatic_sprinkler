@@ -5,20 +5,20 @@ import json
 import utime
 import _thread
 
-from src.simple_logger import SimpleLogger
+from src.simple_logger import SimpleLogger, LogLevels
 from src.hw_interface import HwInterface, Sensor, Pump
 from src.backend import BackEndInterface
 # #############################################################################
 #                          GLOBAL VARIABLES
 # #############################################################################
-logger = SimpleLogger()
+logger = SimpleLogger(LogLevels.INFO)
 
 # #############################################################################
 #                               CLASSES
 # #############################################################################
 class Garden:
     def __init__(self) -> None:
-        logger.debug("Init Gerden...")
+        logger.info(f"{self.__class__.__name__} - Init Gerden...")
         self.start_time = utime.time()
 
         self.watering_timer = utime.time()
@@ -35,21 +35,19 @@ class Garden:
         self.sensor_reading_timer = utime.time()
         self.sensor_reading_period = 20 * 60  # Sensor reading period
         self.sensor_reading_period = 10  # TODO erase this for real application
-        logger.debug("[ok] timers and period initialized")
-        # self.exec_update_interval = 5  # Time in seconds
-        # self.log_update_interval = 50  # Time in seconds
+        logger.debug(f"{self.__class__.__name__} - [ok] timers and period initialized")
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
 
-        logger.debug("[ok] pumps and sensors initialized")
+        logger.debug(f"{self.__class__.__name__} - [ok] pumps and sensors initialized")
 
         self.backend = BackEndInterface()
-        logger.debug("[ok] backend initialized")
+        logger.debug(f"{self.__class__.__name__} - [ok] backend initialized")
 
         self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
 
-        logger.debug("[ok] Init completed.")
+        logger.info(f"{self.__class__.__name__} - [ok] Init completed.")
 
     def init_timers(self):
         # This functions allows to sync all timers after that the NTP sync
@@ -83,7 +81,7 @@ class Garden:
                     else:
                         return False
                 else:
-                    logger.debug("NTP not sync. Watering timeout expired.")
+                    logger.debug(f"{self.__class__.__name__} - NTP not sync. Watering timeout expired.")
                     self.daily_watering_done = True
                     return True
             return False
@@ -91,14 +89,14 @@ class Garden:
 
     def pump_cycle(self):
         for iteration in range(self.watering_iterations):
-            logger.debug("Watering iteration: {}/{}".format(iteration + 1, self.watering_iterations))
+            logger.debug(f"{self.__class__.__name__} - Watering iteration: {iteration + 1}/{self.watering_iterations}")
             for pump in self.pumps:
                 pump.watering()
             utime.sleep(self.watering_itersations_delay)
 
     def is_backend_sync_moment(self):
         if (utime.time() - self.back_sync_timer) >= self.back_sync_period:
-            logger.debug("Backend sync time")
+            logger.debug(f"{self.__class__.__name__} - Backend sync time")
             return True
         return False
 
@@ -106,14 +104,14 @@ class Garden:
         data_dict = {}
 
         for pump in self.pumps:
-            data_dict["Plant{}".format(pump.pump_id)] = pump.get_db_data()
+            data_dict[f"Plant{pump.pump_id}"] = pump.get_db_data()
 
         for sensor in self.sensors:
-            plant = data_dict["Plant{}".format(sensor.sensor_id)]
+            plant = data_dict[f"Plant{sensor.sensor_id}"]
             sensor_data = sensor.get_db_data()
             for entry in sensor_data:
                 plant[entry] = sensor_data[entry]
-            data_dict["Plant{}".format(sensor.sensor_id)] = plant
+            data_dict[f"Plant{sensor.sensor_id}"] = plant
 
         just_value = {}
         for plant in data_dict:
@@ -127,27 +125,27 @@ class Garden:
         return json.dumps(conv_data)
 
     def send_data_to_back(self):
-        logger.debug("Collecting data...")
+        logger.debug(f"{self.__class__.__name__} - Collecting data...")
         if self.backend.mqtt_status:
             str_data = self._dict_2_str(self._collect_data())
-            logger.debug("[ok] data collected")
+            logger.info(f"{self.__class__.__name__} - [ok] data collected")
         else:
-            logger.debug("No mqtt registered, data collection skipped.")
+            logger.debug(f"{self.__class__.__name__} - No mqtt registered, data collection skipped.")
 
         if self.backend.mqtt_status:
             self.backend.mqtt_client.publish("garden/status", str_data)
-            logger.debug("MQTT - Pump status sent")
+            logger.debug(f"{self.__class__.__name__} - MQTT - Pump status sent")
 
     def is_sensor_reading_moment(self):
         if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
-            logger.debug("Sensor reading moment")
+            logger.debug(f"{self.__class__.__name__} - Sensor reading moment")
             return True
         return False
 
     def reading_sensors(self):
         for i in range(len(self.sensors)):
             sensor_value = self.sensors[i].get_voltage()
-            logger.debug("Sensor: {} -> Voltage: {}".format(i, sensor_value))
+            logger.debug(f"{self.__class__.__name__} - Sensor: {i} -> Voltage: {sensor_value}")
 
     def thread_backend_sync(self):
         while True:
@@ -156,7 +154,7 @@ class Garden:
                     self.send_data_to_back()
                     self.back_sync_timer = utime.time()
             except AttributeError as e:
-                logger.error("Thread error! Exception: {}".format(e))
+                logger.error(f"{self.__class__.__name__} - Thread error! Exception: {e}")
                 utime.sleep(2)
             except Exception:
                 utime.sleep(2)
