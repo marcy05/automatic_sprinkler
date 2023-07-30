@@ -23,18 +23,21 @@ class Garden:
 
         self.watering_timer = utime.time()
         self.daily_watering_done = False
-        self.watering_period = 1 * 24 * 60 * 60  # Days
+        self.watering_period = 1 * 24 * 60 * 60  # Days in seconds
         self.watering_period = 50  # TODO erase this for real application
         self.watering_iterations = 3
         self.watering_itersations_delay = 10  # seconds of delays between one watering action and another.
 
         self.back_sync_timer = utime.time()
-        self.back_sync_period = 60 * 60  # Period of time for backend sync
+        self.back_sync_period = 60 * 60  # Period of time for backend sync in seconds
         self.back_sync_period = 10  # TODO erase for real application
 
         self.sensor_reading_timer = utime.time()
-        self.sensor_reading_period = 20 * 60  # Sensor reading period
+        self.sensor_reading_period = 20 * 60  # Sensor reading period in seconds
         self.sensor_reading_period = 10  # TODO erase this for real application
+
+        self.log_bit_timer = utime.time()
+        self.log_bit_period = 60  # Log heartbit in seconds
         logger.debug(f"{self.__class__.__name__} - [ok] timers and period initialized")
 
         self.pumps = [Pump(i) for i in range(7)]
@@ -57,6 +60,7 @@ class Garden:
         self.watering_timer = init_time
         self.back_sync_timer = init_time
         self.sensor_reading_timer = init_time
+        self.log_bit_timer = init_time
 
     def _is_evening(self):
         tm = utime.gmtime(utime.time())
@@ -160,6 +164,11 @@ class Garden:
                 utime.sleep(2)
                 pass
 
+    def is_log_moment(self):
+        if (utime.time() - self.log_bit_timer) >= self.log_bit_period:
+            return True
+        return False
+
     def run(self):
 
         if self.is_watering_moment():
@@ -169,3 +178,7 @@ class Garden:
         if self.is_sensor_reading_moment():
             self.reading_sensors()
             self.sensor_reading_timer = utime.time()
+
+        if self.is_log_moment():
+            logger.info(f"{self.__class__.__name__} - System alive")
+            self.log_bit_timer = utime.time()
