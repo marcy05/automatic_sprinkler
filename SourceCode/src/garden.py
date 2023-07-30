@@ -6,7 +6,7 @@ import utime
 import _thread
 
 from src.simple_logger import SimpleLogger, LogLevels
-from src.hw_interface import HwInterface, Sensor, Pump
+from src.hw_interface import Sensor, Pump
 from src.backend import BackEndInterface
 # #############################################################################
 #                          GLOBAL VARIABLES
