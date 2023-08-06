@@ -1,14 +1,10 @@
 # #############################################################################
 #                               IMPORT
 # #############################################################################
-import utime
-import json
-import _thread
 
 from src.garden import Garden
 from src.simple_logger import SimpleLogger, LogLevels
-from src.backend import BackEndInterface
-from src.hw_interface import HwInterface, Sensor, Pump
+from src.hw_interface import HwInterface
 
 # #############################################################################
 #                               GLOBAL VARIABLES
