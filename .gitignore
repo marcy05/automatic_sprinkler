@@ -1,5 +1,7 @@
 # Folders
 **/my_secret.py
+venv/*
+typings/*
 .vscode
 *.bat
 *.save
