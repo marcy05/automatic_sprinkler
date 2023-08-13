@@ -32,6 +32,8 @@ class HwInterface:
         self.__sensor_s1 = 20
         self.__sensor_s0 = 21
 
+        self.__water_level = 28
+
         self.d_s0 = machine.Pin(self.__pump_s0, machine.Pin.OUT)
         self.d_s1 = machine.Pin(self.__pump_s1, machine.Pin.OUT)
         self.d_s2 = machine.Pin(self.__pump_s2, machine.Pin.OUT)
@@ -60,6 +62,8 @@ class HwInterface:
                                    (1, 0, 1, 1),
                                    (0, 1, 1, 1),
                                    (1, 1, 1, 1)]
+
+        self.water_level = machine.ADC(self.__water_level)
 
     def reset_digital_mux(self):
         logger.debug(f"{self.__class__.__name__} - Start resetting all relays...")
@@ -93,6 +97,11 @@ class HwInterface:
         self.a_s3.value(self.multiplex_selector[channel][3])
         volt = self._read_u16(self.a_sig.read_u16())
         return volt
+
+    def get_water_sensor_voltage(self) -> float:
+        volt = self._read_u16(self.water_level.read_u16())
+        return volt
+
 
 class Pump:
     def __init__(self, pump_id: int) -> None:
@@ -175,3 +184,21 @@ class Sensor:
     def get_db_current_val(self) -> dict:
         data = {f"Sensor{self.sensor_id}CurrentValue": self.current_value}
         return data
+
+
+class WaterLevel:
+    def __init__(self) -> None:
+        self._full = False
+        self._water_threshold = 2  # TODO test out the value with and without water
+
+    def _read_water_level(self) -> None:
+        hw_interface = HwInterface()
+
+        if hw_interface.get_water_sensor_voltage() < self._water_threshold:
+            self._full = False
+        else:
+            self._full = True
+
+    def is_tank_full(self) -> bool:
+        self._read_water_level()
+        return self._full
