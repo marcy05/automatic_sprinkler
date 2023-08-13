@@ -82,6 +82,12 @@ class Garden:
         else:
             return False
 
+    def _deactivate_all_pumps(self) -> None:
+        logger.debug(f"{self.__class__.__name__} - Deactivating all pumps...")
+        for pump in self.pumps:
+            pump.set_pump_status(False)
+        logger.debug(f"{self.__class__.__name__} - All pumps deactivated")
+
     def is_watering_moment(self):
         if not self.daily_watering_done:
             if (utime.time() - self.watering_timer) >= self.watering_period:
@@ -180,7 +186,9 @@ class Garden:
         if self.is_tank_full():
             if self.is_watering_moment():
                 self.pump_cycle()
-                self.watering_timer = utime.time()            
+                self.watering_timer = utime.time()
+        else:
+            self._deactivate_all_pumps()       
 
         if self.is_sensor_reading_moment():
             self.reading_sensors()

@@ -134,6 +134,10 @@ class Pump:
         hw_interface = HwInterface()
         hw_interface.set_channel_value(self.pump_id, signal)
 
+    def set_pump_status(self, status: bool) -> None:
+        logger.debug(f"{self.__class__.__name__}: {self.pump_id}, setting status: {status}")
+        self.status = status
+
     def watering(self):
         logger.info(f"{self.__class__.__name__} - Watering period started")
         self.set_pump_value(True)
