@@ -198,6 +198,7 @@ class WaterLevel:
     def _read_water_level(self) -> None:
         hw_interface = HwInterface()
 
+        logger.warning(f"{self.__class__.__name__} - Water threshold not calibrated !")
         if hw_interface.get_water_sensor_voltage() < self._water_threshold:
             self._full = False
         else:
