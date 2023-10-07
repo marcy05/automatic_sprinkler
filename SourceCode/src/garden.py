@@ -130,15 +130,7 @@ class Garden:
 
     def send_data_to_back(self):
         logger.debug(f"{self.__class__.__name__} - Collecting data...")
-        if self.backend.mqtt_status:
-            str_data = self._dict_2_str(self._collect_data())
-            logger.info(f"{self.__class__.__name__} - [ok] data collected")
-        else:
-            logger.debug(f"{self.__class__.__name__} - No mqtt registered, data collection skipped.")
-
-        if self.backend.mqtt_status:
-            self.backend.mqtt_client.publish("garden/status", str_data)
-            logger.debug(f"{self.__class__.__name__} - MQTT - Pump status sent")
+        logger.info("Placeholder function. Send data to backend.")
 
     def is_sensor_reading_moment(self):
         if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
