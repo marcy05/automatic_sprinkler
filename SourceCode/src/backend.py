@@ -55,10 +55,10 @@ class BackEndInterface:
         max_retries = 20
         for i in range(max_retries):
             if not self.wlan.isconnected():
-                logger.debug(f"{self.__class__.__name__} - Connection retry {i + 1}/{max_retries}")
+                logger.info(f"{self.__class__.__name__} - Connection retry {i + 1}/{max_retries}")
                 time.sleep(1)
             else:
-                logger.debug(f"{self.__class__.__name__} - Connected.")
+                logger.info(f"{self.__class__.__name__} - Connected.")
                 self.network_status = True
                 break
         if not self.wlan.isconnected():
@@ -70,6 +70,14 @@ class BackEndInterface:
                 try:
                     ntp.settime()
                     self.ntp_sync_done = True
-                    logger.info(f"{self.__class__.__name__} - NTP time set: {time.localtime()}")
+                    _current_time = time.localtime()
+                    _year = _current_time[0]
+                    _month = _current_time[1]
+                    _day = _current_time[2]
+                    _hour = _current_time[3]
+                    _min = _current_time[4]
+                    _sec = _current_time[5]
+
+                    logger.info(f"{self.__class__.__name__} - NTP time set: {_day}/{_month}/{_year} {_hour}:{_min}:{_sec}")
                 except Exception:
                     logger.warning(f"{self.__class__.__name__} - Not possible to set global time")
