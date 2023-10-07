@@ -1,0 +1,3 @@
+[submodule "micropython-utelegram"]
+	path = SourceCode/src/micropython-utelegram
+	url = https://github.com/marcy05/micropython-utelegram
