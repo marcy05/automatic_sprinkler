@@ -39,7 +39,8 @@ class SimpleLogger(LogLevels):
                                                           current_time[3],
                                                           current_time[4],
                                                           current_time[5])
-            print("{} - INFO - {}".format(formatted_date, message))
+            msg_2_print = "{} - INFO - {}".format(formatted_date, message)
+            print(msg_2_print)
 
     def warning(self, message: str):
         if self._level <= self.WARNING:
@@ -62,3 +63,9 @@ class SimpleLogger(LogLevels):
                                                           current_time[4],
                                                           current_time[5])
             print("{} - ERROR - {}".format(formatted_date, message))
+
+# #############################################################################
+#                             GLOBAL FUNCTIONS
+# #############################################################################
+
+logger = SimpleLogger(LogLevels.INFO)

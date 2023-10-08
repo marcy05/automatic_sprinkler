@@ -6,12 +6,9 @@ import network
 
 import ntptime as ntp
 from src.my_secret import secret
-from src.simple_logger import SimpleLogger, LogLevels
-
-# #############################################################################
-#                          GLOBAL VARIABLES
-# #############################################################################
-logger = SimpleLogger(LogLevels.INFO)
+from src.simple_logger import logger
+from src.utelegram.utelegram import Ubot
+from src.utelegram.utelegram import TelegramMessage
 
 # #############################################################################
 #                               CLASSES
@@ -47,6 +44,7 @@ class BackEndInterface:
     def init(self):
         self.connect()
         self.set_correct_time()
+        self.init_bot()
 
     def connect(self):
         logger.info(f"{self.__class__.__name__} - Connecting...")
@@ -68,6 +66,7 @@ class BackEndInterface:
         if self.network_status:
             if self.wlan.isconnected():
                 try:
+                    logger.info("Setting global time...")
                     ntp.settime()
                     self.ntp_sync_done = True
                     _current_time = time.localtime()
@@ -81,3 +80,31 @@ class BackEndInterface:
                     logger.info(f"{self.__class__.__name__} - NTP time set: {_day}/{_month}/{_year} {_hour}:{_min}:{_sec}")
                 except Exception:
                     logger.warning(f"{self.__class__.__name__} - Not possible to set global time")
+
+    def init_bot(self):
+        self.bot = Ubot(secret["token"])
+
+        self.bot.register("/start", self.reply_start)
+        self.bot.set_default_handler(self.get_message)
+
+    def reply_start(self, message) -> TelegramMessage:
+        logger.debug("Reply start message")
+        msg = TelegramMessage(message)
+        start_message = "The following messages are supported:\n"\
+                        "/ping - It will answer pong\n\n"\
+                        "/get_sensors_data - Retrive Sensors data\n\n"\
+                        "/get_pumps_data - Retrive Pumps data\n\n"\
+                        "/set_p<pump_id(0-6)>_stat_<status(true/false)>\n\n"\
+                        "/set_p<pump_id(0-6)>_actPeriod_<seconds as float>\n\n"\
+                        "/set_s<sensor_id(0-6)>_stat_<status(true/false)>\n"
+        self.bot.send(message['message']['chat']['id'], start_message)
+
+        logger.debug("Start message replied.")
+
+        return msg
+
+    def get_message(self, message) -> TelegramMessage:
+        logger.debug("Getting default message")
+
+        msg = TelegramMessage(message)
+        return msg

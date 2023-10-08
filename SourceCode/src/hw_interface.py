@@ -5,12 +5,7 @@ import os
 import utime
 import machine
 
-from src.simple_logger import SimpleLogger, LogLevels
-
-# #############################################################################
-#                          GLOBAL VARIABLES
-# #############################################################################
-logger = SimpleLogger(LogLevels.INFO)
+from src.simple_logger import logger
 
 # #############################################################################
 #                               CLASSES
@@ -112,6 +107,10 @@ class Pump:
                 "Pump{}ActPeriod".format(self.pump_id): self.get_activation_period()}
         return data
 
+    def get_str_data(self) -> str:
+        data = f"P_{self.pump_id}_Status: {self.status}, P_{self.pump_id}_ActPeriod: {self._activation_period}"
+        return data
+
     def get_db_status(self) -> dict:
         data = {"Pump{}Status".format(self.pump_id): self.status}
         return data
@@ -119,6 +118,10 @@ class Pump:
     def get_db_Act_period(self) -> dict:
         data = {"Pump{}ActPeriod".format(self.pump_id): self.get_activation_period()}
         return data
+
+    def set_status(self, status: bool):
+        self.status = status
+        self.set_pump_value(status)
 
     def set_pump_value(self, signal: bool):
         logger.debug(f"{self.__class__.__name__}: {self.pump_id}, setting value: {signal}")
@@ -164,6 +167,10 @@ class Sensor:
                 f"Sensor{self.sensor_id}CurrentValue": self.current_value}
         return data
 
+    def get_str_data(self) -> str:
+        data = f"S_{self.sensor_id}_Status: {self.status}\nS_{self.sensor_id}_ActTRH: {self.active_threshold}\nS_{self.sensor_id}_Value: {self.current_value}"
+        return data
+
     def get_db_status(self) -> dict:
         data = {f"Sensor{self.sensor_id}Status": self.status}
         return data
@@ -175,3 +182,9 @@ class Sensor:
     def get_db_current_val(self) -> dict:
         data = {f"Sensor{self.sensor_id}CurrentValue": self.current_value}
         return data
+
+    def set_status(self, status: bool) -> None:
+        self.status = status
+
+    def set_threshold(self, threshold: float) -> None:
+        self.active_threshold = threshold

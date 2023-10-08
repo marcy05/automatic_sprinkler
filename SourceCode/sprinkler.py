@@ -3,13 +3,12 @@
 # #############################################################################
 
 from src.garden import Garden
-from src.simple_logger import SimpleLogger, LogLevels
+from src.simple_logger import logger
 from src.hw_interface import HwInterface
 
 # #############################################################################
 #                               GLOBAL VARIABLES
 # #############################################################################
-logger = SimpleLogger(LogLevels.INFO)
 
 HwInterface().reset_digital_mux()
 

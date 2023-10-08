@@ -3,15 +3,10 @@
 # #############################################################################
 import json
 import utime
-import _thread
 
-from src.simple_logger import SimpleLogger, LogLevels
+from src.simple_logger import logger
 from src.hw_interface import Sensor, Pump
 from src.backend import BackEndInterface
-# #############################################################################
-#                          GLOBAL VARIABLES
-# #############################################################################
-logger = SimpleLogger(LogLevels.INFO)
 
 # #############################################################################
 #                               CLASSES
@@ -37,7 +32,7 @@ class Garden:
         self.sensor_reading_period = 10  # TODO erase this for real application
 
         self.log_bit_timer = utime.time()
-        self.log_bit_period = 60  # Log heartbit in seconds
+        self.log_bit_period = 2  # Log heartbit in seconds
         logger.debug(f"{self.__class__.__name__} - [ok] timers and period initialized")
 
         self.pumps = [Pump(i) for i in range(7)]
@@ -47,8 +42,6 @@ class Garden:
 
         self.backend = BackEndInterface()
         logger.debug(f"{self.__class__.__name__} - [ok] backend initialized")
-
-        self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
 
         logger.info(f"{self.__class__.__name__} - [ok] Init completed.")
 
@@ -104,33 +97,127 @@ class Garden:
             return True
         return False
 
-    def _collect_data(self) -> dict:
-        data_dict = {}
+    # def _collect_data(self) -> dict:
+    #     data_dict = {}
 
-        for pump in self.pumps:
-            data_dict[f"Plant{pump.pump_id}"] = pump.get_db_data()
+    #     for pump in self.pumps:
+    #         data_dict[f"Plant{pump.pump_id}"] = pump.get_db_data()
 
+    #     for sensor in self.sensors:
+    #         plant = data_dict[f"Plant{sensor.sensor_id}"]
+    #         sensor_data = sensor.get_db_data()
+    #         for entry in sensor_data:
+    #             plant[entry] = sensor_data[entry]
+    #         data_dict[f"Plant{sensor.sensor_id}"] = plant
+
+    #     just_value = {}
+    #     for plant in data_dict:
+    #         data = data_dict[plant]
+    #         for key in data:
+    #             just_value[key] = data[key]
+
+    #     return just_value
+
+    def _get_sensors_data(self) -> str:
+        sensors_data = ""
         for sensor in self.sensors:
-            plant = data_dict[f"Plant{sensor.sensor_id}"]
-            sensor_data = sensor.get_db_data()
-            for entry in sensor_data:
-                plant[entry] = sensor_data[entry]
-            data_dict[f"Plant{sensor.sensor_id}"] = plant
+            sensors_data += f"{sensor.get_str_data()}\n\n"
+        return sensors_data
 
-        just_value = {}
-        for plant in data_dict:
-            data = data_dict[plant]
-            for key in data:
-                just_value[key] = data[key]
-
-        return just_value
+    def _get_pumps_data(self) -> str:
+        pumps_data = ""
+        for pump in self.pumps:
+            pumps_data += f"{pump.get_str_data()}\n\n"
+        return pumps_data
 
     def _dict_2_str(self, conv_data: dict) -> str:
-        return json.dumps(conv_data)
+        print(type(str(json.dumps(conv_data))))
+        print(str(json.dumps(conv_data)))
+        return str(json.dumps(conv_data))
 
-    def send_data_to_back(self):
-        logger.debug(f"{self.__class__.__name__} - Collecting data...")
-        logger.info("Placeholder function. Send data to backend.")
+    def _set_pump_status(self, pump_id: int, status: bool) -> None:
+        for pump in self.pumps:
+            if pump.pump_id == pump_id:
+                pump.set_status(status)
+                break
+
+    def _set_pump_activation_period(self, pump_id: int, pump_actTime: float) -> None:
+        for pump in self.pumps:
+            if pump.pump_id == pump_id:
+                pump.set_activation_period(pump_actTime)
+                break
+
+    def _set_sensor_status(self, sensor_id: int, status: bool) -> None:
+        for sensor in self.sensors:
+            if sensor.sensor_id == sensor_id:
+                sensor.set_status(status)
+                break
+
+    def evaluate_data_from_telegram(self):
+        logger.info(f"{self.__class__.__name__} - Listening to Telegram")
+        t_msg = self.backend.bot.read_once()
+        if t_msg is not None:
+            logger.info(f"{self.__class__.__name__} - ID: {t_msg.chat_id} message: {t_msg.msg_text}")
+
+            P_S_ID_FIELD = 1
+            P_S_COMMAND = 2
+            P_S_VALUE_FIELD = 3
+
+            if t_msg.msg_text == "/get_sensors_data":
+                logger.info("Retriving sensors data")
+                self.backend.bot.send(t_msg.chat_id, f"Sensors:\n{self._get_sensors_data()}")
+            elif t_msg.msg_text == "/get_pumps_data":
+                logger.info("Retriving pumps data")
+                self.backend.bot.send(t_msg.chat_id, f"Pumps:\n{self._get_pumps_data()}")
+            elif "/set_" in t_msg.msg_text:
+                logger.info("Set event detected")
+                split_msg = t_msg.msg_text.split("_")
+
+                if "p" in split_msg[P_S_ID_FIELD]:
+                    logger.info("Pump set event detected")
+                    pump_id = int(split_msg[P_S_ID_FIELD].replace("p", ""))
+                    logger.info(f"Pump id: {pump_id}")
+
+                    if "stat" in split_msg[P_S_COMMAND]:
+                        status_str = split_msg[P_S_VALUE_FIELD].lower()
+                        if status_str == "false":
+                            status = False
+                        elif status_str == "true":
+                            status = True
+                        logger.info(f"Pump status: {status}")
+                        self._set_pump_status(pump_id, status)
+                        self.backend.bot.send(t_msg.chat_id, "Command successfully executed")
+
+                    elif "actperiod" in split_msg[P_S_COMMAND].lower():
+                        activation_period = float(split_msg[P_S_VALUE_FIELD])
+                        logger.info(f"Activation for Pump: {pump_id} will change to: {activation_period}")
+                        self._set_pump_activation_period(pump_id, activation_period)
+                        self.backend.bot.send(t_msg.chat_id, "Command successfully executed")
+
+                    else:
+                        self.backend.bot.send(t_msg.chat_id, "Command not recognized")
+
+                elif "s" in split_msg[P_S_ID_FIELD]:
+                    logger.info("Sensor set event detected")
+                    sensor_id = int(split_msg[P_S_ID_FIELD].replace("s", ""))
+                    logger.info(f"Pump id: {sensor_id}")
+
+                    if "stat" in split_msg[P_S_COMMAND]:
+                        status_str = split_msg[P_S_VALUE_FIELD]
+                        if status_str == "false":
+                            status = False
+                        elif status_str == "true":
+                            status = True
+                        logger.info(f"Sensor status: {status}")
+                        self._set_sensor_status(sensor_id, status)
+                        self.backend.bot.send(t_msg.chat_id, "Command successfully executed")
+                    else:
+                        self.backend.bot.send(t_msg.chat_id, "Command not recognized")
+
+                else:
+                    self.backend.bot.send(t_msg.chat_id, "Command not recognized")
+        else:
+            logger.debug(f"{self.__class__.__name__} - No new messages from Telegram.")
 
     def is_sensor_reading_moment(self):
         if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
@@ -142,19 +229,6 @@ class Garden:
         for i in range(len(self.sensors)):
             sensor_value = self.sensors[i].get_voltage()
             logger.debug(f"{self.__class__.__name__} - Sensor: {i} -> Voltage: {sensor_value}")
-
-    def thread_backend_sync(self):
-        while True:
-            try:
-                if self.is_backend_sync_moment():
-                    self.send_data_to_back()
-                    self.back_sync_timer = utime.time()
-            except AttributeError as e:
-                logger.error(f"{self.__class__.__name__} - Thread error! Exception: {e}")
-                utime.sleep(2)
-            except Exception:
-                utime.sleep(2)
-                pass
 
     def is_log_moment(self):
         if (utime.time() - self.log_bit_timer) >= self.log_bit_period:
@@ -174,3 +248,4 @@ class Garden:
         if self.is_log_moment():
             logger.info(f"{self.__class__.__name__} - System alive")
             self.log_bit_timer = utime.time()
+            self.evaluate_data_from_telegram()
