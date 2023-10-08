@@ -5,12 +5,7 @@ import os
 import utime
 import machine
 
-from src.simple_logger import SimpleLogger, LogLevels
-
-# #############################################################################
-#                          GLOBAL VARIABLES
-# #############################################################################
-logger = SimpleLogger(LogLevels.INFO)
+from src.simple_logger import logger
 
 # #############################################################################
 #                               CLASSES

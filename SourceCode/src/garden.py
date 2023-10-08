@@ -3,15 +3,10 @@
 # #############################################################################
 import json
 import utime
-import _thread
 
-from src.simple_logger import SimpleLogger, LogLevels
+from src.simple_logger import logger
 from src.hw_interface import Sensor, Pump
 from src.backend import BackEndInterface
-# #############################################################################
-#                          GLOBAL VARIABLES
-# #############################################################################
-logger = SimpleLogger(LogLevels.INFO)
 
 # #############################################################################
 #                               CLASSES
@@ -47,8 +42,6 @@ class Garden:
 
         self.backend = BackEndInterface()
         logger.debug(f"{self.__class__.__name__} - [ok] backend initialized")
-
-        self.backend_sync_thread = _thread.start_new_thread(self.thread_backend_sync, ())
 
         logger.info(f"{self.__class__.__name__} - [ok] Init completed.")
 
@@ -132,6 +125,10 @@ class Garden:
         logger.debug(f"{self.__class__.__name__} - Collecting data...")
         logger.info("Placeholder function. Send data to backend.")
 
+    def get_data_from_telegram(self):
+        logger.info(f"{self.__class__.__name__} - Listening to Telegram")
+        self.backend.bot.read_once()
+
     def is_sensor_reading_moment(self):
         if (utime.time() - self.sensor_reading_timer) >= self.sensor_reading_period:
             logger.debug(f"{self.__class__.__name__} - Sensor reading moment")
@@ -142,19 +139,6 @@ class Garden:
         for i in range(len(self.sensors)):
             sensor_value = self.sensors[i].get_voltage()
             logger.debug(f"{self.__class__.__name__} - Sensor: {i} -> Voltage: {sensor_value}")
-
-    def thread_backend_sync(self):
-        while True:
-            try:
-                if self.is_backend_sync_moment():
-                    self.send_data_to_back()
-                    self.back_sync_timer = utime.time()
-            except AttributeError as e:
-                logger.error(f"{self.__class__.__name__} - Thread error! Exception: {e}")
-                utime.sleep(2)
-            except Exception:
-                utime.sleep(2)
-                pass
 
     def is_log_moment(self):
         if (utime.time() - self.log_bit_timer) >= self.log_bit_period:
@@ -174,3 +158,4 @@ class Garden:
         if self.is_log_moment():
             logger.info(f"{self.__class__.__name__} - System alive")
             self.log_bit_timer = utime.time()
+            self.get_data_from_telegram()
