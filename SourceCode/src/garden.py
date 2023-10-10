@@ -97,27 +97,6 @@ class Garden:
             return True
         return False
 
-    # def _collect_data(self) -> dict:
-    #     data_dict = {}
-
-    #     for pump in self.pumps:
-    #         data_dict[f"Plant{pump.pump_id}"] = pump.get_db_data()
-
-    #     for sensor in self.sensors:
-    #         plant = data_dict[f"Plant{sensor.sensor_id}"]
-    #         sensor_data = sensor.get_db_data()
-    #         for entry in sensor_data:
-    #             plant[entry] = sensor_data[entry]
-    #         data_dict[f"Plant{sensor.sensor_id}"] = plant
-
-    #     just_value = {}
-    #     for plant in data_dict:
-    #         data = data_dict[plant]
-    #         for key in data:
-    #             just_value[key] = data[key]
-
-    #     return just_value
-
     def _get_sensors_data(self) -> str:
         sensors_data = ""
         for sensor in self.sensors:
