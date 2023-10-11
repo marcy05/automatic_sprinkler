@@ -6,6 +6,8 @@ import utime
 import machine
 
 from src.simple_logger import logger
+from src.persistencyHandler import get_persisted_timers
+from src.persistencyHandler import write_new_timer
 
 # #############################################################################
 #                               CLASSES
@@ -93,11 +95,17 @@ class Pump:
     def __init__(self, pump_id: int) -> None:
         self.pump_id = pump_id
         self.status = False
-        self._activation_period = 2   # Value in seconds
+        self._activation_period = get_persisted_timers(f"P{self.pump_id}_activation_period")   # Value in seconds
 
-    def set_activation_period(self, activation_perdiod: float) -> None:
-        self._activation_period = activation_perdiod
-        logger.info(f"{self.__class__.__name__} - Pump:{self.pump_id} - Activation period updated to:{self._activation_period}")
+    def set_activation_period(self, activation_perdiod: float) -> bool:
+        try:
+            write_new_timer(f"P{self.pump_id}_activation_period", activation_perdiod)
+            self._activation_period = activation_perdiod
+            logger.info(f"{self.__class__.__name__} - Pump:{self.pump_id} - Activation period updated to:{self._activation_period}")
+            return True
+        except Exception as e:
+            logger.warning(f"It was not possible to set the new activation value for Pump:{self.pump_id}")
+            return False
 
     def get_activation_period(self) -> float:
         return self._activation_period
