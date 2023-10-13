@@ -3,12 +3,20 @@
 # #############################################################################
 import time
 import network
+import json
 
 import ntptime as ntp
 from src.my_secret import secret
 from src.simple_logger import logger
 from src.utelegram.utelegram import Ubot
 from src.utelegram.utelegram import TelegramMessage
+
+from src.secretHandler import update_telegram_pwd
+from src.secretHandler import get_telegram_pwd
+from src.secretHandler import set_allowed_user
+from src.secretHandler import is_user_allowed
+
+from src.my_secret import secret
 
 # #############################################################################
 #                               CLASSES
@@ -85,13 +93,40 @@ class BackEndInterface:
         self.bot = Ubot(secret["token"])
 
         self.bot.register("/start", self.reply_start)
+        self.bot.register("/register_device", self.register_device)
         self.bot.set_default_handler(self.get_message)
+
+    def register_device(self, message) -> None:
+        msg = TelegramMessage(message)
+        splitted_msg = msg.msg_text.split(" ")
+
+        if len(splitted_msg) == 2:
+            user_pwd = splitted_msg[1]
+
+            if get_telegram_pwd() == "":
+
+                logger.info(f"A new password is going to be set to: {user_pwd}")
+                update_telegram_pwd(user_pwd)
+                set_allowed_user(msg.sender_id)
+                logger.info(f"New password set to: {user_pwd}")
+                self.bot.send(msg.chat_id, "Password set")
+
+            elif user_pwd == get_telegram_pwd():
+                set_allowed_user(msg.sender_id)
+                logger.info("Password correct. New User added.")
+                self.bot.send(msg.chat_id, "Password correct. New User added.")
+
+            else:
+                logger.info("ERROR: Wrong password, not possible to add new user")
+                self.bot.send(msg.chat_id, "ERROR: Wrong password, not possible to add new user")
+        else:
+            self.bot.send(msg.chat_id, "Invalid number of argument")
 
     def reply_start(self, message) -> TelegramMessage:
         logger.debug("Reply start message")
         msg = TelegramMessage(message)
         start_message = "The following messages are supported:\n"\
-                        "/ping - It will answer pong\n\n"\
+                        "/register_device <password> - It start the paring procedure\n\n"\
                         "/get_sensors_data - Retrive Sensors data\n\n"\
                         "/get_pumps_data - Retrive Pumps data\n\n"\
                         "/set_p<pump_id(0-6)>_stat_<status(true/false)>\n\n"\
@@ -104,7 +139,13 @@ class BackEndInterface:
         return msg
 
     def get_message(self, message) -> TelegramMessage:
-        logger.debug("Getting default message")
+        logger.debug(f"Got message: {json.dumps(message)}")
 
         msg = TelegramMessage(message)
-        return msg
+
+        if is_user_allowed(msg.sender_id):
+            logger.info("Autorized user")
+            return msg
+        else:
+            self.bot.send(msg.chat_id, "The user is not allowed to communicate befer a successful registration")
+            return None

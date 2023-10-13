@@ -137,7 +137,7 @@ class Garden:
         t_msg = self.backend.bot.read_once()
         try:
             if t_msg is not None:
-                logger.info(f"{self.__class__.__name__} - ID: {t_msg.chat_id} message: {t_msg.msg_text}")
+                logger.info(f"{self.__class__.__name__} - ID: {t_msg.sender_id} message: {t_msg.msg_text}")
 
                 P_S_ID_FIELD = 1
                 P_S_COMMAND = 2
