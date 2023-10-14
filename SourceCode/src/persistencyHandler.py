@@ -66,3 +66,14 @@ def write_new_timer(timer_name: str, value) -> None:
         print(
             f"It was not possible to write the value: {value}, type: {type(value)} for timer: {timer_name} or the persistency because: {e}")
         raise
+
+
+def get_int_from_json(value_name: str, file_path: str) -> int | None:
+    j_file = _get_json_file(file_path)
+    try:
+        if isinstance(j_file[value_name], int):
+            return j_file[value_name]
+        else:
+            return None
+    except Exception as e:
+        print(f"It was not possible to find value: {value_name} in json: {json.dumps(j_file)} because: {e}")

@@ -7,7 +7,7 @@ import utime
 from src.simple_logger import logger
 from src.hw_interface import Sensor, Pump
 from src.backend import BackEndInterface
-from src.utils_func import get_int_from_json
+from src.persistencyHandler import get_int_from_json
 
 # #############################################################################
 #                               CLASSES
