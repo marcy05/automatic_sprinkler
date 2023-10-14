@@ -133,7 +133,7 @@ class Garden:
         gardent_timers = f"Watering iterations = {self.watering_iterations}\n" + \
                          f"Watering iteration delay = {self.watering_itersations_delay}\n" + \
                          f"Backend communication delay = {self.back_sync_period}\n" + \
-                         f"Sensor reading persiod = {self.sensor_reading_period}\n"
+                         f"Sensor reading period = {self.sensor_reading_period}\n"
 
         return gardent_timers
 
