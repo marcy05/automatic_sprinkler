@@ -45,6 +45,7 @@ class Garden:
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
         self._tank_level = WaterLevel()
+        self._pump_deactivation_sem = False
 
         logger.debug(f"{self.__class__.__name__} - [ok] pumps and sensors initialized")
 
@@ -253,6 +254,13 @@ class Garden:
             self.backend.bot.send(msg.chat_id, "Set message with not correct number of arguments")
             return False
 
+    def __forced_watering_cycle(self, msg: TelegramMessage):
+        logger.info("Start forced watering cycle")
+        self.backend.bot.send(msg.chat_id, "Start forced watering cycle")
+        self.pump_cycle()
+        logger.info("Watering cycle completed")
+        self.backend.bot.send(msg.chat_id, "Finished forced watering cycle")
+
     def evaluate_data_from_telegram(self):
         logger.info(f"{self.__class__.__name__} - Listening to Telegram")
         t_msg = self.backend.bot.read_once()
@@ -268,6 +276,9 @@ class Garden:
 
                 elif t_msg.msg_text == "/get_garden_timers":
                     self.__reply_garden_timers(t_msg)
+
+                elif t_msg.msg_text == "/force_watering_cycle":
+                    self.__forced_watering_cycle(t_msg)
 
                 elif "/set_" in t_msg.msg_text:
                     logger.info("Set event detected")
@@ -356,11 +367,14 @@ class Garden:
 
     def run(self):
         if self.is_tank_full():
+            self._pump_deactivation_sem = True
             if self.is_watering_moment():
                 self.pump_cycle()
                 self.watering_timer = utime.time()
         else:
-            self._deactivate_all_pumps()
+            if self._pump_deactivation_sem:
+                self._pump_deactivation_sem = False
+                self._deactivate_all_pumps()
 
         if self.is_sensor_reading_moment():
             self.reading_sensors()
