@@ -7,7 +7,7 @@ import machine
 
 from src.simple_logger import logger
 from src.persistencyHandler import get_persisted_timers
-from src.persistencyHandler import write_new_timer
+from src.persistencyHandler import write_persistency_value
 
 # #############################################################################
 #                               CLASSES
@@ -99,7 +99,7 @@ class Pump:
 
     def set_activation_period(self, activation_perdiod: float) -> bool:
         try:
-            write_new_timer(f"P{self.pump_id}_activation_period", activation_perdiod)
+            write_persistency_value(f"P{self.pump_id}_activation_period", activation_perdiod)
             self._activation_period = activation_perdiod
             logger.info(f"{self.__class__.__name__} - Pump:{self.pump_id} - Activation period updated to:{self._activation_period}")
             return True
