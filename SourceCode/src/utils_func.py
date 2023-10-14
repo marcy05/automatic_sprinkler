@@ -27,3 +27,10 @@ def _get_json_file(file_path: str) -> dict:
         return dict(file_json)
     except Exception as e:
         print(f"Impossible to open the JSON file: {file_path} because: {e}")
+
+
+def str2bool(variable: str) -> bool:
+    if variable.lower() == "true":
+        return True
+    else:
+        return False

@@ -4,11 +4,15 @@
 import json
 import utime
 
+import src.const as const
+
 from src.simple_logger import logger
 from src.hw_interface import Sensor, Pump, WaterLevel
 from src.backend import BackEndInterface
+from src.backend import TelegramMessage
 from src.persistencyHandler import get_int_from_json, get_float_from_json
 from src.persistencyHandler import write_persistency_value
+from src.utils_func import str2bool
 
 # #############################################################################
 #                               CLASSES
@@ -151,6 +155,104 @@ class Garden:
                 sensor.set_status(status)
                 break
 
+    def __reply_sensor_data(self, msg: TelegramMessage):
+        logger.info("Retrieving sensors data")
+        self.backend.bot.send(msg.chat_id, f"Sensors:\n{self._get_sensors_data()}")
+
+    def __reply_pumps_data(self, msg: TelegramMessage):
+        logger.info("Retrieving pumps data")
+        self.backend.bot.send(msg.chat_id, f"Pumps:\n{self._get_pumps_data()}")
+
+    def __reply_garden_timers(self, msg: TelegramMessage):
+        logger.info("Retrieving garden timers")
+        self.backend.bot.send(msg.chat_id, self._get_garden_timers())
+
+    def __reply_pump_status(self, msg: TelegramMessage):
+        split_msg = msg.msg_text.split("_")
+        pump_id = int(split_msg[const.ENTITY_FIELD].replace("p", ""))
+        status_str = split_msg[const.VALUE_FIELD].lower()
+        status = str2bool(status_str)
+        logger.info(f"Pump status: {status}")
+        self._set_pump_status(pump_id, status)
+        self.backend.bot.send(msg.chat_id, "Command successfully executed")
+
+    def __reply_activation_period(self, msg: TelegramMessage):
+        split_msg = msg.msg_text.split("_")
+        pump_id = int(split_msg[const.ENTITY_FIELD].replace("p", ""))
+        activation_period = float(split_msg[const.VALUE_FIELD])
+        logger.info(f"Activation for Pump: {pump_id} will change to: {activation_period}")
+        result = self._set_pump_activation_period(pump_id, activation_period)
+        if result:
+            self.backend.bot.send(msg.chat_id, "Command successfully executed")
+        else:
+            self.backend.bot.send(msg.chat_id, "Command executed unsuccessfully")
+
+    def __reply_sensor_status(self, msg: TelegramMessage):
+        split_msg = msg.msg_text.split("_")
+        sensor_id = int(split_msg[const.ENTITY_FIELD].replace("s", ""))
+        status_str = split_msg[const.VALUE_FIELD]
+        status = str2bool(status_str)
+        logger.info(f"Sensor status: {status}")
+        self._set_sensor_status(sensor_id, status)
+        self.backend.bot.send(msg.chat_id, "Command successfully executed")
+
+    def __reply_watering_iterations(self, msg: TelegramMessage):
+        logger.debug("Setting Watering iterations...")
+        split_msg = msg.msg_text.split("_")
+        watering_iterations = int(split_msg[const.VALUE_FIELD])
+        write_persistency_value("garden_watering_iteration", watering_iterations)
+        self.watering_iterations = get_int_from_json("garden_watering_iteration", self._timers_persistency_path)
+
+        logger.info(f"Watering iteration correctly set to: {self.watering_iterations}")
+        self.backend.bot.send(msg.chat_id, f"Watering iteration correctly set to: {self.watering_iterations}")
+
+    def __reply_watering_iterations_delay(self, msg: TelegramMessage):
+        logger.debug("Setting watering delay...")
+        split_msg = msg.msg_text.split("_")
+        watering_delay = float(split_msg[const.VALUE_FIELD])
+        write_persistency_value("garden_water_iteration_delay", watering_delay)
+        self.watering_itersations_delay = get_float_from_json("garden_water_iteration_delay", self._timers_persistency_path)
+
+        logger.info(f"Watering iteration delay correctly set to: {self.watering_itersations_delay}")
+        self.backend.bot.send(msg.chat_id, f"Watering iteration delay correctly set to: {self.watering_itersations_delay}")
+
+    def __reply_sensor_reading_period(self, msg: TelegramMessage):
+        logger.debug("Setting sensor reading period...")
+        split_msg = msg.msg_text.split("_")
+        reading_period = float(split_msg[const.VALUE_FIELD])
+        write_persistency_value("sensor_reading_period", reading_period)
+        self.sensor_reading_period = get_float_from_json("sensor_reading_period", self._timers_persistency_path)
+
+        logger.info(f"Reading period correctly set to: {self.sensor_reading_period}")
+        self.backend.bot.send(msg.chat_id, f"Reading period correctly set to: {self.sensor_reading_period}")
+
+    def __reply_backend_sync_period(self, msg: TelegramMessage):
+        logger.debug("Setting backend sync period...")
+        split_msg = msg.msg_text.split("_")
+        sync_period = float(split_msg[const.VALUE_FIELD])
+        write_persistency_value("backend_sync_period", sync_period)
+        self.back_sync_period = get_float_from_json("backend_sync_period", self._timers_persistency_path)
+
+        logger.info(f"Backend sync period set correctly to: {self.back_sync_period}")
+        self.backend.bot.send(msg.chat_id, f"Backend sync period set correctly to: {self.back_sync_period}")
+
+    def __is_valid_set_message(self, msg: TelegramMessage):
+        splitted_msg = msg.msg_text.split("_")
+        if len(splitted_msg) == 4:
+            try:
+                entity = splitted_msg[const.ENTITY_FIELD]
+                command = splitted_msg[const.ENTITY_COMMAND]
+                value = splitted_msg[const.VALUE_FIELD]
+                return True
+            except Exception as e:
+                logger.warning(f"Unexpected exception: {e}")
+                self.backend.bot.send("The command was not successful, check your paramenters")
+                return False
+        else:
+            logger.warning("Set message with not correct number of arguments")
+            self.backend.bot.send(msg.chat_id, "Set message with not correct number of arguments")
+            return False
+
     def evaluate_data_from_telegram(self):
         logger.info(f"{self.__class__.__name__} - Listening to Telegram")
         t_msg = self.backend.bot.read_once()
@@ -158,121 +260,78 @@ class Garden:
             if t_msg is not None:
                 logger.info(f"{self.__class__.__name__} - ID: {t_msg.sender_id} message: {t_msg.msg_text}")
 
-                ENTITY_FIELD = 1
-                ENTITY_COMMAND = 2
-                VALUE_FIELD = 3
-
                 if t_msg.msg_text == "/get_sensors_data":
-                    logger.info("Retriving sensors data")
-                    self.backend.bot.send(t_msg.chat_id, f"Sensors:\n{self._get_sensors_data()}")
+                    self.__reply_sensor_data(t_msg)
+
                 elif t_msg.msg_text == "/get_pumps_data":
-                    logger.info("Retriving pumps data")
-                    self.backend.bot.send(t_msg.chat_id, f"Pumps:\n{self._get_pumps_data()}")
+                    self.__reply_pumps_data(t_msg)
+
                 elif t_msg.msg_text == "/get_garden_timers":
-                    self.backend.bot.send(t_msg.chat_id, self._get_garden_timers())
+                    self.__reply_garden_timers(t_msg)
 
                 elif "/set_" in t_msg.msg_text:
                     logger.info("Set event detected")
-                    split_msg = t_msg.msg_text.split("_")
+                    if self.__is_valid_set_message(t_msg):
 
-                    if "p" in split_msg[ENTITY_FIELD] and len(split_msg[ENTITY_FIELD]) == 2:
-                        logger.info("Pump set event detected")
-                        pump_id = int(split_msg[ENTITY_FIELD].replace("p", ""))
-                        logger.info(f"Pump id: {pump_id}")
+                        split_msg = t_msg.msg_text.split("_")
 
-                        if "stat" in split_msg[ENTITY_COMMAND]:
-                            status_str = split_msg[VALUE_FIELD].lower()
-                            if status_str == "false":
-                                status = False
-                            elif status_str == "true":
-                                status = True
-                            logger.info(f"Pump status: {status}")
-                            self._set_pump_status(pump_id, status)
-                            self.backend.bot.send(t_msg.chat_id, "Command successfully executed")
+                        entity = split_msg[const.ENTITY_FIELD]  # pump, sensor, garden, backend
+                        command = split_msg[const.ENTITY_COMMAND]
+                        value = split_msg[const.VALUE_FIELD]
 
-                        elif "actperiod" in split_msg[ENTITY_COMMAND].lower():
-                            activation_period = float(split_msg[VALUE_FIELD])
-                            logger.info(f"Activation for Pump: {pump_id} will change to: {activation_period}")
-                            result = self._set_pump_activation_period(pump_id, activation_period)
-                            if result:
-                                self.backend.bot.send(t_msg.chat_id, "Command successfully executed")
+                        if "p" in entity and len(entity) == 2:
+                            logger.info("Pump set event detected")
+                            pump_id = int(entity.replace("p", ""))
+                            logger.info(f"Pump id: {pump_id}")
+
+                            if "stat" in command:
+                                self.__reply_pump_status(t_msg)
+
+                            elif "actperiod" in command.lower():
+                                self.__reply_activation_period(t_msg)
+
                             else:
-                                self.backend.bot.send(t_msg.chat_id, "Command executed unsuccessfully")
+                                logger.warning("Command not found in Pump")
+                                self.backend.bot.send(t_msg.chat_id, "Command not found in Pump")
+
+                        elif "s" in entity and len(entity) == 2:
+                            logger.info("Sensor set event detected")
+                            sensor_id = int(entity.replace("s", ""))
+                            logger.info(f"Sensor id: {sensor_id}")
+
+                            if "stat" in command:
+                                self.__reply_sensor_status(t_msg)
+                            else:
+                                logger.warning("Command not found for Sensor")
+                                self.backend.bot.send(t_msg.chat_id, "Command not found for Sensor")
+
+                        elif "garden" in split_msg[const.ENTITY_FIELD]:
+                            logger.info("Garden set event detected")
+
+                            if "wateringIterations" in command:
+                                self.__reply_watering_iterations(t_msg)
+
+                            elif "waterIterDelay" in command:
+                                self.__reply_watering_iterations_delay(t_msg)
+
+                            elif "sensorReadingPeriod" in command:
+                                self.__reply_sensor_reading_period(t_msg)
+                            else:
+                                logger.warning("Command not found in Garden")
+                                self.backend.bot.send(t_msg.chat_id, "Command not found in Garden")
+
+                        elif "backend" in split_msg[const.ENTITY_FIELD]:
+                            logger.info("Backend set event detected")
+
+                            if "syncPeriod" in command:
+                                self.__reply_backend_sync_period(t_msg)
+
+                            else:
+                                logger.warning("Command not found in backend")
+                                self.backend.bot.send(t_msg.chat_id, "Command not found in backend")
 
                         else:
-                            logger.warning("Command not found in Pump")
-                            self.backend.bot.send(t_msg.chat_id, "Command not found in Pump")
-
-                    elif "s" in split_msg[ENTITY_FIELD] and len(split_msg[ENTITY_FIELD]) == 2:
-                        logger.info("Sensor set event detected")
-                        sensor_id = int(split_msg[ENTITY_FIELD].replace("s", ""))
-                        logger.info(f"Sensor id: {sensor_id}")
-
-                        if "stat" in split_msg[ENTITY_COMMAND]:
-                            status_str = split_msg[VALUE_FIELD]
-                            if status_str == "false":
-                                status = False
-                            elif status_str == "true":
-                                status = True
-                            logger.info(f"Sensor status: {status}")
-                            self._set_sensor_status(sensor_id, status)
-                            self.backend.bot.send(t_msg.chat_id, "Command successfully executed")
-                        else:
-                            logger.warning("Command not found for Sensor")
-                            self.backend.bot.send(t_msg.chat_id, "Command not found for Sensor")
-
-                    elif "garden" in split_msg[ENTITY_FIELD]:
-                        logger.info("Garden set event detected")
-
-                        if "wateringIterations" in split_msg[ENTITY_COMMAND]:
-                            logger.debug("Setting Watering iterations...")
-                            watering_iterations = int(split_msg[VALUE_FIELD])
-                            write_persistency_value("garden_watering_iteration", watering_iterations)
-                            self.watering_iterations = get_int_from_json("garden_watering_iteration", self._timers_persistency_path)
-
-                            logger.info(f"Watering iteration correctly set to: {self.watering_iterations}")
-                            self.backend.bot.send(t_msg.chat_id, f"Watering iteration correctly set to: {self.watering_iterations}")
-
-                        elif "waterIterDelay" in split_msg[ENTITY_COMMAND]:
-                            logger.debug("Setting watering delay...")
-                            watering_delay = float(split_msg[VALUE_FIELD])
-                            write_persistency_value("garden_water_iteration_delay", watering_delay)
-                            self.watering_itersations_delay = get_float_from_json("garden_water_iteration_delay", self._timers_persistency_path)
-
-                            logger.info(f"Watering iteration delay correctly set to: {self.watering_itersations_delay}")
-                            self.backend.bot.send(t_msg.chat_id, f"Watering iteration delay correctly set to: {self.watering_itersations_delay}")
-
-                        elif "sensorReadingPeriod" in split_msg[ENTITY_COMMAND]:
-                            logger.debug("Setting sensor reading period...")
-                            reading_period = float(split_msg[VALUE_FIELD])
-                            write_persistency_value("sensor_reading_period", reading_period)
-                            self.sensor_reading_period = get_float_from_json("sensor_reading_period", self._timers_persistency_path)
-
-                            logger.info(f"Reading period correctly set to: {self.sensor_reading_period}")
-                            self.backend.bot.send(t_msg.chat_id, f"Reading period correctly set to: {self.sensor_reading_period}")
-
-                        else:
-                            logger.warning("Command not found in Garden")
-                            self.backend.bot.send(t_msg.chat_id, "Command not found in Garden")
-
-                    elif "backend" in split_msg[ENTITY_FIELD]:
-                        logger.info("Backend set event detected")
-
-                        if "syncPeriod" in split_msg[ENTITY_COMMAND]:
-                            logger.debug("Setting backend sync period...")
-                            sync_period = float(split_msg[VALUE_FIELD])
-                            write_persistency_value("backend_sync_period", sync_period)
-                            self.back_sync_period = get_float_from_json("backend_sync_period", self._timers_persistency_path)
-
-                            logger.info(f"Backend sync period set correctly to: {self.back_sync_period}")
-                            self.backend.bot.send(t_msg.chat_id, f"Backend sync period set correctly to: {self.back_sync_period}")
-
-                        else:
-                            logger.warning("Command not found in backend")
-                            self.backend.bot.send(t_msg.chat_id, "Command not found in backend")
-
-                    else:
-                        self.backend.bot.send(t_msg.chat_id, "Command not recognized")
+                            self.backend.bot.send(t_msg.chat_id, "Command not recognized")
             else:
                 logger.debug(f"{self.__class__.__name__} - No new messages from Telegram.")
         except Exception as e:
