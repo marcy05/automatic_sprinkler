@@ -45,6 +45,7 @@ class Garden:
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
         self._tank_level = WaterLevel()
+        self._pump_deactivation_sem = False
 
         logger.debug(f"{self.__class__.__name__} - [ok] pumps and sensors initialized")
 
@@ -366,11 +367,14 @@ class Garden:
 
     def run(self):
         if self.is_tank_full():
+            self._pump_deactivation_sem = True
             if self.is_watering_moment():
                 self.pump_cycle()
                 self.watering_timer = utime.time()
         else:
-            self._deactivate_all_pumps()
+            if self._pump_deactivation_sem:
+                self._pump_deactivation_sem = False
+                self._deactivate_all_pumps()
 
         if self.is_sensor_reading_moment():
             self.reading_sensors()
