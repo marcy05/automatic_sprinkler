@@ -5,7 +5,7 @@ import json
 import utime
 
 from src.simple_logger import logger
-from src.hw_interface import Sensor, Pump
+from src.hw_interface import Sensor, Pump, WaterLevel
 from src.backend import BackEndInterface
 from src.persistencyHandler import get_int_from_json, get_float_from_json
 from src.persistencyHandler import write_persistency_value
@@ -40,6 +40,7 @@ class Garden:
 
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
+        self._tank_level = WaterLevel()
 
         logger.debug(f"{self.__class__.__name__} - [ok] pumps and sensors initialized")
 
@@ -70,6 +71,18 @@ class Garden:
         if month > 5 and month < 10:
             if hour >= 19:
                 return True
+
+    def is_tank_full(self) -> bool:
+        if self._tank_level.is_tank_full():
+            return True
+        else:
+            return False
+
+    def _deactivate_all_pumps(self) -> None:
+        logger.debug(f"{self.__class__.__name__} - Deactivating all pumps...")
+        for pump in self.pumps:
+            pump.set_pump_status(False)
+        logger.debug(f"{self.__class__.__name__} - All pumps deactivated")
 
     def is_watering_moment(self):
         if not self.daily_watering_done:
@@ -283,10 +296,12 @@ class Garden:
         return False
 
     def run(self):
-
-        if self.is_watering_moment():
-            self.pump_cycle()
-            self.watering_timer = utime.time()
+        if self.is_tank_full():
+            if self.is_watering_moment():
+                self.pump_cycle()
+                self.watering_timer = utime.time()
+        else:
+            self._deactivate_all_pumps()       
 
         if self.is_sensor_reading_moment():
             self.reading_sensors()
