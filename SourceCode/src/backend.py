@@ -131,6 +131,7 @@ class BackEndInterface:
                         "/am_I_alive - Return if the system is active\n\n" + \
                         "/get_system_time - Return the system time\n\n" + \
                         "/register_device <password> - It start the paring procedure\n\n" + \
+                        "/force_watering_cycle - It start a watering cycle\n\n" + \
                         "/get_sensors_data - Retrive Sensors data\n\n" + \
                         "/get_pumps_data - Retrive Pumps data\n\n" + \
                         "/get_garden_timers - Retrive general garden timers\n\n" + \
