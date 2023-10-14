@@ -7,6 +7,7 @@ import utime
 from src.simple_logger import logger
 from src.hw_interface import Sensor, Pump
 from src.backend import BackEndInterface
+from src.utils_func import get_int_from_json
 
 # #############################################################################
 #                               CLASSES
@@ -20,8 +21,8 @@ class Garden:
         self.daily_watering_done = False
         self.watering_period = 1 * 24 * 60 * 60  # Days in seconds
         self.watering_period = 50  # TODO erase this for real application
-        self.watering_iterations = 3
-        self.watering_itersations_delay = 10  # seconds of delays between one watering action and another.
+        self.watering_iterations = get_int_from_json("garden_watering_iteration", "src/timers.json")
+        self.watering_itersations_delay = get_int_from_json("garden_water_iteration_delay", "src/timers.json")  # seconds of delays between one watering action and another.
 
         self.back_sync_timer = utime.time()
         self.back_sync_period = 60 * 60  # Period of time for backend sync in seconds

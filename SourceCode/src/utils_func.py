@@ -27,3 +27,26 @@ def _get_json_file(file_path: str) -> dict:
         return dict(file_json)
     except Exception as e:
         print(f"Impossible to open the JSON file: {file_path} because: {e}")
+
+
+def get_int_from_json(value_name: str, file_path: str) -> int | None:
+    j_file = _get_json_file(file_path)
+    try:
+        if isinstance(j_file[value_name], int):
+            return j_file[value_name]
+        else:
+            return None
+    except Exception as e:
+        print(f"It was not possible to find value: {value_name} in json: {json.dumps(j_file)} because: {e}")
+
+
+def get_str_from_json(value_name: str, file_path: str) -> str | None:
+    j_file = _get_json_file(file_path)
+
+    try:
+        if isinstance(j_file[value_name], str):
+            return j_file[value_name]
+        else:
+            return None
+    except Exception as e:
+        print(f"It was not possible to find value: {value_name} in json: {json.dumps(j_file)} because: {e}")

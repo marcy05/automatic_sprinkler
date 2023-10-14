@@ -10,7 +10,9 @@ default_value = {"P0_activation_period": 2,
                  "P3_activation_period": 2,
                  "P4_activation_period": 2,
                  "P5_activation_period": 2,
-                 "P6_activation_period": 2}
+                 "P6_activation_period": 2,
+                 "garden_watering_iteration": 3,
+                 "garden_water_iteration_delay": 10}
 
 
 def _write_default_value():
