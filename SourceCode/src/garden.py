@@ -120,11 +120,6 @@ class Garden:
 
         return gardent_timers
 
-    # def _dict_2_str(self, conv_data: dict) -> str:
-    #     print(type(str(json.dumps(conv_data))))
-    #     print(str(json.dumps(conv_data)))
-    #     return str(json.dumps(conv_data))
-
     def _set_pump_status(self, pump_id: int, status: bool) -> None:
         for pump in self.pumps:
             if pump.pump_id == pump_id:
