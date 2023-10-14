@@ -147,5 +147,6 @@ class BackEndInterface:
             logger.info("Autorized user")
             return msg
         else:
+            logger.warning("The user is not allowed to communicate befer a successful registration")
             self.bot.send(msg.chat_id, "The user is not allowed to communicate befer a successful registration")
             return None
