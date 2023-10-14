@@ -94,6 +94,8 @@ class BackEndInterface:
 
         self.bot.register("/start", self.reply_start)
         self.bot.register("/register_device", self.register_device)
+        self.bot.register("/am_I_alive", self.alive_msg)
+        self.bot.register("/get_system_time", self.get_sys_time)
         self.bot.set_default_handler(self.get_message)
 
     def register_device(self, message) -> None:
@@ -126,6 +128,8 @@ class BackEndInterface:
         logger.debug("Reply start message")
         msg = TelegramMessage(message)
         start_message = "The following messages are supported:\n" + \
+                        "/am_I_alive - Return if the system is active\n\n" + \
+                        "/get_system_time - Return the system time\n\n" + \
                         "/register_device <password> - It start the paring procedure\n\n" + \
                         "/get_sensors_data - Retrive Sensors data\n\n" + \
                         "/get_pumps_data - Retrive Pumps data\n\n" + \
@@ -138,11 +142,30 @@ class BackEndInterface:
                         "/set_garden_sensorReadingPeriod_<seconds as float>\n" + \
                         "/set_backend_syncPeriod_<seconds as float>\n"
 
-        self.bot.send(message['message']['chat']['id'], start_message)
+        self.bot.send(msg.chat_id, start_message)
 
         logger.debug("Start message replied.")
 
         return msg
+
+    def alive_msg(self, message):
+        logger.debug("Alive message request reply")
+        msg = TelegramMessage(message)
+        self.bot.send(msg.chat_id, "The system is alive")
+
+    def get_sys_time(self, message):
+        logger.debug("Return system time request")
+        _current_time = time.localtime()
+        _year = _current_time[0]
+        _month = _current_time[1]
+        _day = _current_time[2]
+        _hour = _current_time[3]
+        _min = _current_time[4]
+        _sec = _current_time[5]
+        message_time = f"{_day:02}/{_month:02}/{_year} {_hour:02}:{_min:02}:{_sec:02}"
+
+        msg = TelegramMessage(message)
+        self.bot.send(msg.chat_id, message_time)
 
     def get_message(self, message) -> TelegramMessage:
         logger.debug(f"Got message: {json.dumps(message)}")
