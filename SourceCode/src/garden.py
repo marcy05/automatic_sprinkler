@@ -83,10 +83,10 @@ class Garden:
             return False
 
     def _deactivate_all_pumps(self) -> None:
-        logger.debug(f"{self.__class__.__name__} - Deactivating all pumps...")
+        logger.info(f"{self.__class__.__name__} - Deactivating all pumps...")
         for pump in self.pumps:
             pump.set_status(False)
-        logger.debug(f"{self.__class__.__name__} - All pumps deactivated")
+        logger.info(f"{self.__class__.__name__} - All pumps deactivated")
 
     def is_watering_moment(self):
         if not self.daily_watering_done:
