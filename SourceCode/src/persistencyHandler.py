@@ -12,7 +12,9 @@ default_value = {"P0_activation_period": 2,
                  "P5_activation_period": 2,
                  "P6_activation_period": 2,
                  "garden_watering_iteration": 3,
-                 "garden_water_iteration_delay": 10}
+                 "garden_water_iteration_delay": 10,
+                 "backend_sync_period": 10,
+                 "sensor_reading_period": 10}
 
 
 def _write_default_value():
@@ -56,15 +58,15 @@ def get_persisted_timers(timer_name: str):
         print(f"Not possible to find the key: {timer_name} in persistence: {timers}")
 
 
-def write_new_timer(timer_name: str, value) -> None:
+def write_persistency_value(persistency_name: str, value) -> None:
     try:
         persistency = _get_json_file_extended(persisted_timers_file)
-        persistency[timer_name] = value
+        persistency[persistency_name] = value
         _write_json_file(persisted_timers_file, persistency)
 
     except Exception as e:
         print(
-            f"It was not possible to write the value: {value}, type: {type(value)} for timer: {timer_name} or the persistency because: {e}")
+            f"It was not possible to write the value: {value}, type: {type(value)} for timer: {persistency_name} or the persistency because: {e}")
         raise
 
 
@@ -72,6 +74,17 @@ def get_int_from_json(value_name: str, file_path: str) -> int | None:
     j_file = _get_json_file(file_path)
     try:
         if isinstance(j_file[value_name], int):
+            return j_file[value_name]
+        else:
+            return None
+    except Exception as e:
+        print(f"It was not possible to find value: {value_name} in json: {json.dumps(j_file)} because: {e}")
+
+
+def get_float_from_json(value_name: str, file_path: str) -> float | None:
+    j_file = _get_json_file(file_path)
+    try:
+        if isinstance(j_file[value_name], float):
             return j_file[value_name]
         else:
             return None

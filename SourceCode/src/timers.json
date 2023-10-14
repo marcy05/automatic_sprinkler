@@ -7,5 +7,7 @@
     "P5_activation_period": 2,
     "P6_activation_period": 2,
     "garden_watering_iteration": 3,
-    "garden_water_iteration_delay": 10
+    "garden_water_iteration_delay": 10,
+    "backend_sync_period": 10,
+    "sensor_reading_period": 10
 }
