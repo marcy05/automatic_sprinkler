@@ -41,6 +41,7 @@ class Garden:
         self.log_bit_period = 2  # Log heartbit in seconds
         logger.debug(f"{self.__class__.__name__} - [ok] timers and period initialized")
 
+        logger.debug(f"{self.__class__.__name__} - Initializing pumps and sensors...")
         self.pumps = [Pump(i) for i in range(7)]
         self.sensors = [Sensor(i) for i in range(7)]
         self._tank_level = WaterLevel()
