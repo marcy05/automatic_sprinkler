@@ -1,6 +1,7 @@
 # #############################################################################
 #                               IMPORT
 # ############################################################################# 
+import gc
 import utime
 
 import src.const as const
@@ -12,6 +13,7 @@ from src.backend import TelegramMessage
 from src.persistencyHandler import get_int_from_json, get_float_from_json
 from src.persistencyHandler import write_persistency_value
 from src.utils_func import status2bool, bool2onoff
+from src.utils_func import forced_exit_txt, get_time
 
 # #############################################################################
 #                               CLASSES
@@ -288,6 +290,10 @@ class Garden:
         logger.info(text)
         self.backend.bot.send(msg.chat_id, text)
 
+    def __reply_stop_system(self, msg: TelegramMessage):
+        forced_exit_txt(f"{get_time()} - Forced event called by user: {msg.sender_id}")
+        self.backend.bot.send(msg.chat_id, "The system will be stop immediatelly")
+
     def evaluate_data_from_telegram(self):
         logger.info(f"{self.__class__.__name__} - Listening to Telegram")
         t_msg = self.backend.bot.read_once()
@@ -295,7 +301,12 @@ class Garden:
             if t_msg is not None:
                 logger.info(f"{self.__class__.__name__} - ID: {t_msg.sender_id} message: {t_msg.msg_text}")
 
-                if t_msg.msg_text == "/get_sensors_data":
+                if t_msg.msg_text == "/system_stop":
+                    self.__reply_stop_system(t_msg)
+                    self.backend.bot.read_once()  # It will cancel the message on the backend.
+                    return "ForcedExit"
+
+                elif t_msg.msg_text == "/get_sensors_data":
                     self.__reply_sensor_data(t_msg)
 
                 elif t_msg.msg_text == "/get_pumps_data":
@@ -414,6 +425,9 @@ class Garden:
             self.sensor_reading_timer = utime.time()
 
         if self.is_log_moment():
+            gc.collect()
             logger.info(f"{self.__class__.__name__} - System alive")
             self.log_bit_timer = utime.time()
-            self.evaluate_data_from_telegram()
+            evaluation_answer = self.evaluate_data_from_telegram()
+            if evaluation_answer == "ForcedExit":
+                return "ForcedExit"

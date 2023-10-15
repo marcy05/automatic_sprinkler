@@ -1,4 +1,5 @@
 import utime
+import time
 import json
 
 
@@ -49,3 +50,21 @@ def bool2onoff(variable: bool) -> str:
         return "on"
     else:
         return "off"
+
+
+def forced_exit_txt(text=""):
+    f = open("forced_exit_event.txt", "w")
+    f.write(text)
+    f.close()
+
+
+def get_time() -> str:
+    _current_time = time.localtime()
+    _year = _current_time[0]
+    _month = _current_time[1]
+    _day = _current_time[2]
+    _hour = _current_time[3]
+    _min = _current_time[4]
+    _sec = _current_time[5]
+    time_str = f"{_day:02}/{_month:02}/{_year} {_hour:02}:{_min:02}:{_sec:02}"
+    return time_str

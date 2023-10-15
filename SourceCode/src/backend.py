@@ -18,6 +18,8 @@ from src.secretHandler import is_user_allowed
 
 from src.my_secret import secret
 
+from src.utils_func import get_time
+
 # #############################################################################
 #                               CLASSES
 # #############################################################################
@@ -137,6 +139,7 @@ class BackEndInterface:
                         "/get_pumps_data - Retrive Pumps data\n" + \
                         "/get_garden_timers - Retrive general garden timers\n" + \
                         "/get_garden_pumpActiveStatus - Retrive garden pumps active status\n\n" + \
+                        "/system_stop - It will force the system to stop running. Manual reset needed to restart.\n\n" + \
                         "\n" + \
                         "Settings commands:\n" + \
                         "/set_p<pump_id options: (0-6)>_stat_<option: on/off> - Manually switch a pump on and off\n\n" + \
@@ -161,14 +164,7 @@ class BackEndInterface:
 
     def get_sys_time(self, message):
         logger.debug("Return system time request")
-        _current_time = time.localtime()
-        _year = _current_time[0]
-        _month = _current_time[1]
-        _day = _current_time[2]
-        _hour = _current_time[3]
-        _min = _current_time[4]
-        _sec = _current_time[5]
-        message_time = f"{_day:02}/{_month:02}/{_year} {_hour:02}:{_min:02}:{_sec:02}"
+        message_time = get_time()
 
         msg = TelegramMessage(message)
         self.bot.send(msg.chat_id, message_time)
