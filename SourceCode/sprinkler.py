@@ -25,4 +25,5 @@ while True:
     answer = my_garden.run()
     if answer == "ForcedExit":
         logger.warning("Exit has been forced")
+        HwInterface().reset_digital_mux()
         break
