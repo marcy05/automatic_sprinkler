@@ -127,23 +127,26 @@ class BackEndInterface:
     def reply_start(self, message) -> TelegramMessage:
         logger.debug("Reply start message")
         msg = TelegramMessage(message)
-        start_message = "The following messages are supported:\n" + \
-                        "/am_I_alive - Return if the system is active\n\n" + \
-                        "/get_system_time - Return the system time\n\n" + \
-                        "/register_device <password> - It start the paring procedure\n\n" + \
-                        "/force_watering_cycle - It start a watering cycle\n\n" + \
-                        "/get_sensors_data - Retrive Sensors data\n\n" + \
-                        "/get_pumps_data - Retrive Pumps data\n\n" + \
-                        "/get_garden_timers - Retrive general garden timers\n\n" + \
+        start_message = "The following messages are supported.\n" + \
+                        "General commands:\n" + \
+                        "/am_I_alive - Return if the system is active\n" + \
+                        "/get_system_time - Return the system time\n" + \
+                        "/register_device <password> - It start the paring procedure\n" + \
+                        "/force_watering_cycle - It start a watering cycle\n" + \
+                        "/get_sensors_data - Retrive Sensors data\n" + \
+                        "/get_pumps_data - Retrive Pumps data\n" + \
+                        "/get_garden_timers - Retrive general garden timers\n" + \
                         "/get_garden_pumpActiveStatus - Retrive garden pumps active status\n\n" + \
-                        "/set_p<pump_id(0-6)>_stat_<option: true/false>\n\n" + \
-                        "/set_p<pump_id(0-6)>_actPeriod_<seconds as float>\n\n" + \
-                        "/set_p<pump_id(0-6)>_active_<option: on/off>\n\n" + \
-                        "/set_s<sensor_id(0-6)>_stat_<option: true/false>\n" + \
-                        "/set_garden_wateringIterations_<iteration number>\n" + \
-                        "/set_garden_waterIterDelay_<seconds as float>\n" + \
-                        "/set_garden_sensorReadingPeriod_<seconds as float>\n" + \
-                        "/set_backend_syncPeriod_<seconds as float>\n"
+                        "\n" + \
+                        "Settings commands:\n" + \
+                        "/set_p<pump_id options: (0-6)>_stat_<option: on/off> - Manually switch a pump on and off\n\n" + \
+                        "/set_p<pump_id options: (0-6)>_actPeriod_<seconds as float> - It set pump activation time during watering cycle\n\n" + \
+                        "/set_p<pump_id options: (0-6)>_active_<option: on/off> - It activate or deactivate a pump during watering cycle\n\n" + \
+                        "/set_s<sensor_id options: (0-6)>_stat_<option: on/off> - It activate or deactivate a sensor\n" + \
+                        "/set_garden_wateringIterations_<iteration number> - It set the number of cycles the pumps will execute during watering\n" + \
+                        "/set_garden_waterIterDelay_<seconds as float> - It set the delay between the cycles during watering cycle\n" + \
+                        "/set_garden_sensorReadingPeriod_<seconds as float> - It set how frequently the sensors will be read\n" + \
+                        "/set_backend_syncPeriod_<seconds as float> - It set how frequently the user can interact with telegram\n"
 
         self.bot.send(msg.chat_id, start_message)
 

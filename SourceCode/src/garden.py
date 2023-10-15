@@ -11,7 +11,7 @@ from src.backend import BackEndInterface
 from src.backend import TelegramMessage
 from src.persistencyHandler import get_int_from_json, get_float_from_json
 from src.persistencyHandler import write_persistency_value
-from src.utils_func import str2bool, status2bool, bool2onoff
+from src.utils_func import status2bool, bool2onoff
 
 # #############################################################################
 #                               CLASSES
@@ -180,7 +180,7 @@ class Garden:
         split_msg = msg.msg_text.split("_")
         pump_id = int(split_msg[const.ENTITY_FIELD].replace("p", ""))
         status_str = split_msg[const.VALUE_FIELD].lower()
-        status = str2bool(status_str)
+        status = status2bool(status_str)
         logger.info(f"Pump status: {status}")
         self._set_pump_status(pump_id, status)
         self.backend.bot.send(msg.chat_id, "Command successfully executed")
@@ -200,7 +200,7 @@ class Garden:
         split_msg = msg.msg_text.split("_")
         sensor_id = int(split_msg[const.ENTITY_FIELD].replace("s", ""))
         status_str = split_msg[const.VALUE_FIELD]
-        status = str2bool(status_str)
+        status = status2bool(status_str)
         logger.info(f"Sensor status: {status}")
         self._set_sensor_status(sensor_id, status)
         self.backend.bot.send(msg.chat_id, "Command successfully executed")
