@@ -1,7 +1,6 @@
 # #############################################################################
 #                               IMPORT
-# #############################################################################
-import json
+# ############################################################################# 
 import utime
 
 import src.const as const
@@ -12,7 +11,7 @@ from src.backend import BackEndInterface
 from src.backend import TelegramMessage
 from src.persistencyHandler import get_int_from_json, get_float_from_json
 from src.persistencyHandler import write_persistency_value
-from src.utils_func import str2bool, status2bool
+from src.utils_func import str2bool, status2bool, bool2onoff
 
 # #############################################################################
 #                               CLASSES
@@ -280,6 +279,14 @@ class Garden:
         logger.info(f"Pump: {pump_id} set Active status: {active_status} successfully")
         self.backend.bot.send(msg.chat_id, f"Pump: {pump_id} set Active status: {active_status} successfully")
 
+    def __reply_pumps_active_status(self, msg: TelegramMessage):
+        text = ""
+        for pump in self.pumps:
+            act_status = bool2onoff(pump.get_active_status())
+            text += f"pump_{pump.pump_id} is {act_status}\n"
+        logger.info(text)
+        self.backend.bot.send(msg.chat_id, text)
+
     def evaluate_data_from_telegram(self):
         logger.info(f"{self.__class__.__name__} - Listening to Telegram")
         t_msg = self.backend.bot.read_once()
@@ -298,6 +305,9 @@ class Garden:
 
                 elif t_msg.msg_text == "/force_watering_cycle":
                     self.__forced_watering_cycle(t_msg)
+
+                elif t_msg.msg_text == "/get_garden_pumpActiveStatus":
+                    self.__reply_pumps_active_status(t_msg)
 
                 elif "/set_" in t_msg.msg_text:
                     logger.info("Set event detected")

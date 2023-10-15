@@ -135,6 +135,7 @@ class BackEndInterface:
                         "/get_sensors_data - Retrive Sensors data\n\n" + \
                         "/get_pumps_data - Retrive Pumps data\n\n" + \
                         "/get_garden_timers - Retrive general garden timers\n\n" + \
+                        "/get_garden_pumpActiveStatus - Retrive garden pumps active status\n\n" + \
                         "/set_p<pump_id(0-6)>_stat_<option: true/false>\n\n" + \
                         "/set_p<pump_id(0-6)>_actPeriod_<seconds as float>\n\n" + \
                         "/set_p<pump_id(0-6)>_active_<option: on/off>\n\n" + \

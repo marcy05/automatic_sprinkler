@@ -42,3 +42,10 @@ def status2bool(variable: str) -> bool:
         return True
     else:
         return False
+
+
+def bool2onoff(variable: bool) -> str:
+    if variable:
+        return "on"
+    else:
+        return "off"
