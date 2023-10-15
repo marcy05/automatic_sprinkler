@@ -17,8 +17,6 @@ The Repository is structure so that:
 |/SourceCode|It contains all the developend source code|
 |/SourceCode/src/ + sprinkler.py|It is the code needed for the Raspberry Pi Pico W to control the PCB board. The *src* folder has to be uploaded on the microcontroller while the *sprinkerl.py* can be executed locally for tests or uploaded on the target as well.|
 |/SourceCode/Scripts/|It contains some tests that can be executed to test the wiring.|
-|/SourceCode/optional_source|It contains the code that can be used to create a controller with another Raspberry Pico W. It is intended to force the pump activation. The folder Raspberry_Pi_2 contains the code to set up a small server to monitor the data with Grafana.|
-|/SourceCode/doc|It contains some additional references.|
 
 ## Bill of Material for the PCB and water buffer.
 
@@ -45,6 +43,7 @@ The Repository is structure so that:
 |19|Holder top|2|n/a|[3d_file](3d_files/holder_top.STL)|
 |20|Relay support|2|n/a|[3d_file](3d_files/support_relay.STL)|
 |21|(optional) PCB to be printed|1|n/a|[PCB](Board/Schematic_Automatic_Sprinkler_2023-07-30.pdf)|
+|22|Empty tank sensor|1|n/a|[Link](https://www.amazon.it/dp/B0B7S2N6B3?ref=ppx_yo2ov_dt_b_product_details&th=1)|
 
 
 ## Software
@@ -56,6 +55,33 @@ The file must be named ***main.py*** in order to be executed directly at the sta
 * Copy the */src* folder that you find the SourceCode folder to your Raspberry Pico W
 
 * Copy / execute the file *sprinkler.py* . If you want that it will be executed automatically at the startup you have to copy the file *sprinkler.py* to Raspberry Pico and rename it as *main.py*
+
+## What to do to start
+
+1. Copy the source files in Raspberry Pi Pico W (/src + sprinkler.py)
+
+2. Rename my_secret.py.template to my_secret.py
+
+3. Edit my_secret.py adding:
+
+    * Your network information (SSID, password)
+
+    * Create a telegram bot:
+
+        * On Telegram, search @ BotFather, send him a “/start” message
+
+        * Send another “/newbot” message, then follow the instructions to setup a name and a username
+
+        * Your bot is now ready, be sure to save a backup of your API token, and correct, this API token is your bot_token
+    
+    * Add the API token in the file
+
+    * Save the file
+
+4. You can now run the code
+
+5. On Telegram, search your bot (by the username you just created), press the “Start” button or send a “/start” message
+
 
 # Licence
 

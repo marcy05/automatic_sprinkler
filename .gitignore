@@ -9,6 +9,7 @@ typings/*
 # Files
 *secret*
 !SourceCode/src/my_secret.py.template
+!SourceCode/src/secretHandler.py
 
 SourceCode/Scripts/pass_applier_remover.py
 
