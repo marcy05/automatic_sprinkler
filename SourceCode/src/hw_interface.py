@@ -9,6 +9,7 @@ from src.simple_logger import logger
 from src.persistencyHandler import get_persisted_timers
 from src.persistencyHandler import write_persistency_value
 from src.persistencyHandler import get_pump_active_status, write_pump_active_staus
+from src.utils_func import bool2onoff
 
 # #############################################################################
 #                               CLASSES
@@ -127,7 +128,9 @@ class Pump:
         return data
 
     def get_str_data(self) -> str:
-        data = f"P_{self.pump_id}_Status: {self.status}, P_{self.pump_id}_ActPeriod: {self._activation_period}"
+        data = f"P_{self.pump_id}_Status: {bool2onoff(self.status)}, " + \
+               f"P_{self.pump_id}_ActPeriod: {self._activation_period}, " + \
+               f"P_{self.pump_id}_Active_Status: {bool2onoff(self._active)}"
         return data
 
     def get_db_status(self) -> dict:
@@ -188,27 +191,10 @@ class Sensor:
         else:
             return 0
 
-    def get_db_data(self) -> dict:
-        logger.info(f"{self.__class__.__name__} - get sensors data")
-        data = {f"Sensor{self.sensor_id}Status": self.status,
-                f"Sensor{self.sensor_id}ActThreshold": self.active_threshold,
-                f"Sensor{self.sensor_id}CurrentValue": self.current_value}
-        return data
-
     def get_str_data(self) -> str:
-        data = f"S_{self.sensor_id}_Status: {self.status}\nS_{self.sensor_id}_ActTRH: {self.active_threshold}\nS_{self.sensor_id}_Value: {self.current_value}"
-        return data
-
-    def get_db_status(self) -> dict:
-        data = {f"Sensor{self.sensor_id}Status": self.status}
-        return data
-
-    def get_db_actThreshold(self) -> dict:
-        data = {f"Sensor{self.sensor_id}ActThreshold": self.active_threshold}
-        return data
-
-    def get_db_current_val(self) -> dict:
-        data = {f"Sensor{self.sensor_id}CurrentValue": self.current_value}
+        data = f"S_{self.sensor_id}_Status: {bool2onoff(self.status)}\n" + \
+               f"S_{self.sensor_id}_ActTRH: {self.active_threshold}\n" + \
+               f"S_{self.sensor_id}_Value: {self.current_value}"
         return data
 
     def set_status(self, status: bool) -> None:
