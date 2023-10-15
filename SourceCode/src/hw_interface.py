@@ -8,6 +8,7 @@ import machine
 from src.simple_logger import logger
 from src.persistencyHandler import get_persisted_timers
 from src.persistencyHandler import write_persistency_value
+from src.persistencyHandler import get_pump_active_status, write_pump_active_staus
 
 # #############################################################################
 #                               CLASSES
@@ -105,6 +106,7 @@ class Pump:
         self.pump_id = pump_id
         self.status = False
         self._activation_period = get_persisted_timers(f"P{self.pump_id}_activation_period")   # Value in seconds
+        self._active = get_pump_active_status(self.pump_id)
 
     def set_activation_period(self, activation_perdiod: float) -> bool:
         try:
@@ -153,6 +155,15 @@ class Pump:
         self.set_pump_value(False)
         self.status = False
         logger.info(f"{self.__class__.__name__} - Watering period finished")
+
+    def get_active_status(self) -> bool:
+        return self._active
+
+    def set_active_status(self, value: bool) -> None:
+        logger.debug(f"Inactivate pump {self.pump_id}")
+        write_pump_active_staus(self.pump_id, value)
+        self._active = get_pump_active_status(self.pump_id)
+        logger.debug(f"New value for pump{self.pump_id} is {self._active}")
 
 
 class Sensor:
