@@ -142,10 +142,10 @@ class BackEndInterface:
                         "/set_p<pump_id options: (0-6)>_stat_<option: on/off> - Manually switch a pump on and off\n\n" + \
                         "/set_p<pump_id options: (0-6)>_actPeriod_<seconds as float> - It set pump activation time during watering cycle\n\n" + \
                         "/set_p<pump_id options: (0-6)>_active_<option: on/off> - It activate or deactivate a pump during watering cycle\n\n" + \
-                        "/set_s<sensor_id options: (0-6)>_stat_<option: on/off> - It activate or deactivate a sensor\n" + \
-                        "/set_garden_wateringIterations_<iteration number> - It set the number of cycles the pumps will execute during watering\n" + \
-                        "/set_garden_waterIterDelay_<seconds as float> - It set the delay between the cycles during watering cycle\n" + \
-                        "/set_garden_sensorReadingPeriod_<seconds as float> - It set how frequently the sensors will be read\n" + \
+                        "/set_s<sensor_id options: (0-6)>_stat_<option: on/off> - It activate or deactivate a sensor\n\n" + \
+                        "/set_garden_wateringIterations_<iteration number> - It set the number of cycles the pumps will execute during watering\n\n" + \
+                        "/set_garden_waterIterDelay_<seconds as float> - It set the delay between the cycles during watering cycle\n\n" + \
+                        "/set_garden_sensorReadingPeriod_<seconds as float> - It set how frequently the sensors will be read\n\n" + \
                         "/set_backend_syncPeriod_<seconds as float> - It set how frequently the user can interact with telegram\n"
 
         self.bot.send(msg.chat_id, start_message)
