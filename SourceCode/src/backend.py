@@ -135,9 +135,10 @@ class BackEndInterface:
                         "/get_sensors_data - Retrive Sensors data\n\n" + \
                         "/get_pumps_data - Retrive Pumps data\n\n" + \
                         "/get_garden_timers - Retrive general garden timers\n\n" + \
-                        "/set_p<pump_id(0-6)>_stat_<status(true/false)>\n\n" + \
+                        "/set_p<pump_id(0-6)>_stat_<option: true/false>\n\n" + \
                         "/set_p<pump_id(0-6)>_actPeriod_<seconds as float>\n\n" + \
-                        "/set_s<sensor_id(0-6)>_stat_<status(true/false)>\n" + \
+                        "/set_p<pump_id(0-6)>_active_<option: on/off>\n\n" + \
+                        "/set_s<sensor_id(0-6)>_stat_<option: true/false>\n" + \
                         "/set_garden_wateringIterations_<iteration number>\n" + \
                         "/set_garden_waterIterDelay_<seconds as float>\n" + \
                         "/set_garden_sensorReadingPeriod_<seconds as float>\n" + \

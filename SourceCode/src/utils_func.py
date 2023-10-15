@@ -34,3 +34,11 @@ def str2bool(variable: str) -> bool:
         return True
     else:
         return False
+
+
+def status2bool(variable: str) -> bool:
+    true_list = ["on", "true"]
+    if variable.lower() in true_list:
+        return True
+    else:
+        return False

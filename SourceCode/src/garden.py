@@ -12,7 +12,7 @@ from src.backend import BackEndInterface
 from src.backend import TelegramMessage
 from src.persistencyHandler import get_int_from_json, get_float_from_json
 from src.persistencyHandler import write_persistency_value
-from src.utils_func import str2bool
+from src.utils_func import str2bool, status2bool
 
 # #############################################################################
 #                               CLASSES
@@ -109,7 +109,8 @@ class Garden:
         for iteration in range(self.watering_iterations):
             logger.debug(f"{self.__class__.__name__} - Watering iteration: {iteration + 1}/{self.watering_iterations}")
             for pump in self.pumps:
-                pump.watering()
+                if pump.get_active_status():
+                    pump.watering()
             utime.sleep(self.watering_itersations_delay)
 
     def is_backend_sync_moment(self):
@@ -154,6 +155,12 @@ class Garden:
         for sensor in self.sensors:
             if sensor.sensor_id == sensor_id:
                 sensor.set_status(status)
+                break
+
+    def _set_pump_active_status(self, pump_id: int, active_status: bool) -> None:
+        for pump in self.pumps:
+            if pump.pump_id == pump_id:
+                pump.set_active_status(active_status)
                 break
 
     def __reply_sensor_data(self, msg: TelegramMessage):
@@ -261,6 +268,16 @@ class Garden:
         logger.info("Watering cycle completed")
         self.backend.bot.send(msg.chat_id, "Finished forced watering cycle")
 
+    def __reply_active_pump(self, msg: TelegramMessage):
+        logger.debug("Setting new active status for pump...")
+        split_msg = msg.msg_text.split("_")
+        pump_id = int(split_msg[const.ENTITY_FIELD].replace("p", ""))
+        status_str = split_msg[const.VALUE_FIELD].lower()
+        active_status = status2bool(status_str)
+        self._set_pump_active_status(pump_id, active_status)
+        logger.info(f"Pump: {pump_id} set Active status: {active_status} successfully")
+        self.backend.bot.send(msg.chat_id, f"Pump: {pump_id} set Active status: {active_status} successfully")
+
     def evaluate_data_from_telegram(self):
         logger.info(f"{self.__class__.__name__} - Listening to Telegram")
         t_msg = self.backend.bot.read_once()
@@ -295,11 +312,14 @@ class Garden:
                             pump_id = int(entity.replace("p", ""))
                             logger.info(f"Pump id: {pump_id}")
 
-                            if "stat" in command:
+                            if "stat" in command.lower():
                                 self.__reply_pump_status(t_msg)
 
                             elif "actperiod" in command.lower():
                                 self.__reply_activation_period(t_msg)
+
+                            elif "active" in command.lower():
+                                self.__reply_active_pump(t_msg)
 
                             else:
                                 logger.warning("Command not found in Pump")
