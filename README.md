@@ -83,6 +83,32 @@ The file must be named ***main.py*** in order to be executed directly at the sta
 5. On Telegram, search your bot (by the username you just created), press the “Start” button or send a “/start” message
 
 
+# Changelog
+
+## v2.0.0
+
+* First release implementing telegram controlled automatic sprinkler
+
+* User authentication
+
+* 7 autonomous pumps
+
+* 7 autonomous sensors
+
+* Automatic watering cycle
+
+* Manual watering cycle
+
+* Pump activation time with persistency parameters controlled remotelly
+
+* Pump activation and deactivation with persistency and remote contol
+
+* Emergency system stop via remote message
+
+## v1.0.1
+
+## v1.0.0
+
 # Licence
 
 Please check the dedicated file in *main* branch.
