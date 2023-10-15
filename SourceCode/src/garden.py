@@ -111,6 +111,8 @@ class Garden:
             for pump in self.pumps:
                 if pump.get_active_status():
                     pump.watering()
+                else:
+                    logger.debug(f"The pump:{pump.pump_id} has Active status to False. It will be skipped")
             utime.sleep(self.watering_itersations_delay)
 
     def is_backend_sync_moment(self):
