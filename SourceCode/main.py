@@ -6,6 +6,8 @@ from src.garden import Garden
 from src.simple_logger import logger
 from src.hw_interface import HwInterface
 from src.hw_interface import status_led
+from src.hw_interface import status_led_ext
+from src.hw_interface import status_led_wifi
 
 # #############################################################################
 #                               GLOBAL VARIABLES
@@ -24,6 +26,7 @@ my_garden.init_timers()
 logger.info("Entering main loop ->")
 
 status_led.value(1)
+status_led_ext.value(1)
 
 while True:
     answer = my_garden.run()
@@ -33,3 +36,5 @@ while True:
         break
 
 status_led.value(0)
+status_led_ext.value(0)
+status_led_wifi.value(1)
