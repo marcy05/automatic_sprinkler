@@ -78,6 +78,7 @@ class Garden:
         if month > 5 and month < 10:
             if hour >= 19:
                 return True
+        return False
 
     def is_tank_full(self) -> bool:
         if self._tank_level.is_tank_full():
