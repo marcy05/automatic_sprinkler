@@ -85,6 +85,18 @@ The file must be named ***main.py*** in order to be executed directly at the sta
 
 # Changelog
 
+## v2.1.0
+
+* Renamed main file for auto execution
+
+* Add status led when running
+
+* Set watering period to 1 day, dev 50s commented out
+
+* Fix missing return False in is_evening
+
+* Add flow diagrams
+
 ## v2.0.0
 
 * First release implementing telegram controlled automatic sprinkler

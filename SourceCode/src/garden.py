@@ -29,7 +29,7 @@ class Garden:
         self.watering_timer = utime.time()
         self.daily_watering_done = False
         self.watering_period = 1 * 24 * 60 * 60  # Days in seconds
-        self.watering_period = 50  # TODO erase this for real application
+        # self.watering_period = 50  # TODO erase this for real application
         self.watering_iterations = get_int_from_json("garden_watering_iteration", self._timers_persistency_path)
         self.watering_itersations_delay = get_int_from_json("garden_water_iteration_delay", self._timers_persistency_path)  # seconds of delays between one watering action and another.
 
@@ -78,6 +78,7 @@ class Garden:
         if month > 5 and month < 10:
             if hour >= 19:
                 return True
+        return False
 
     def is_tank_full(self) -> bool:
         if self._tank_level.is_tank_full():

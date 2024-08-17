@@ -12,6 +12,13 @@ from src.persistencyHandler import get_pump_active_status, write_pump_active_sta
 from src.utils_func import bool2onoff
 
 # #############################################################################
+#                          GLOBAL VARIABLES
+# #############################################################################
+
+status_led = machine.Pin("LED", machine.Pin.OUT)
+status_led.value(0)
+
+# #############################################################################
 #                               CLASSES
 # #############################################################################
 
