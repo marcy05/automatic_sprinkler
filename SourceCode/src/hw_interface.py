@@ -18,6 +18,12 @@ from src.utils_func import bool2onoff
 status_led = machine.Pin("LED", machine.Pin.OUT)
 status_led.value(0)
 
+status_led_ext = machine.Pin(9, machine.Pin.OUT)
+status_led_ext.value(0)
+
+status_led_wifi = machine.Pin(14, machine.Pin.OUT)
+status_led_wifi.value(0)
+
 # #############################################################################
 #                               CLASSES
 # #############################################################################

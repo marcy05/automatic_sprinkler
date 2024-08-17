@@ -85,6 +85,10 @@ The file must be named ***main.py*** in order to be executed directly at the sta
 
 # Changelog
 
+## v2.1.1
+
+* Add support for external LEDs for RUN and WiFi
+
 ## v2.1.0
 
 * Renamed main file for auto execution

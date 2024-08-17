@@ -20,6 +20,8 @@ from src.my_secret import secret
 
 from src.utils_func import get_time
 
+from src.hw_interface import status_led_wifi
+
 # #############################################################################
 #                               CLASSES
 # #############################################################################
@@ -55,6 +57,7 @@ class BackEndInterface:
         self.connect()
         self.set_correct_time()
         self.init_bot()
+        status_led_wifi.value(1)
 
     def connect(self):
         logger.info(f"{self.__class__.__name__} - Connecting...")
@@ -71,6 +74,7 @@ class BackEndInterface:
                 break
         if not self.wlan.isconnected():
             logger.error(f"{self.__class__.__name__} - Not possible to connect to internet.")
+            status_led_wifi.value(0)
 
     def set_correct_time(self):
         if self.network_status:
