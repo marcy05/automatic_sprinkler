@@ -37,7 +37,7 @@ def _write_default_value():
         fw.close()
         utime.sleep(.1)
     except Exception as e:
-        print("It was not possible to write the default value for Pump activation period! Reason: {e}")
+        print(f"It was not possible to write the default value for Pump activation period! Reason: {e}")
 
 
 def _get_json_file_extended(file_path: str) -> dict:
@@ -65,7 +65,7 @@ def get_persisted_timers(timer_name: str):
     try:
         return timers[timer_name]
     except Exception as e:
-        print(f"Not possible to find the key: {timer_name} in persistence: {timers}")
+        print(f"Not possible to find the key: {timer_name} in persistence: {timers} because of {e}")
 
 
 def write_persistency_value(persistency_name: str, value) -> None:
@@ -80,24 +80,24 @@ def write_persistency_value(persistency_name: str, value) -> None:
         raise
 
 
-def get_int_from_json(value_name: str, file_path: str) -> int | None:
+def get_int_from_json(value_name: str, file_path: str) -> int:
     j_file = _get_json_file_extended(file_path)
     try:
         if isinstance(j_file[value_name], int):
             return j_file[value_name]
         else:
-            return None
+            return 0
     except Exception as e:
         print(f"It was not possible to find value: {value_name} in json: {json.dumps(j_file)} because: {e}")
 
 
-def get_float_from_json(value_name: str, file_path: str) -> float | None:
+def get_float_from_json(value_name: str, file_path: str) -> float:
     j_file = _get_json_file_extended(file_path)
     try:
         if isinstance(j_file[value_name], float):
             return j_file[value_name]
         else:
-            return None
+            return 0.0
     except Exception as e:
         print(f"It was not possible to find value: {value_name} in json: {json.dumps(j_file)} because: {e}")
 
