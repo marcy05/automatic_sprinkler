@@ -146,7 +146,6 @@ class BackEndInterface:
                         "/system_stop - It will force the system to stop running. Manual reset needed to restart.\n\n" + \
                         "\n" + \
                         "Settings commands:\n" + \
-                        "/set_p<pump_id options: (0-6)>_stat_<option: on/off> - Manually switch a pump on and off\n\n" + \
                         "/set_p<pump_id options: (0-6)>_actPeriod_<seconds as float> - It set pump activation time during watering cycle\n\n" + \
                         "/set_p<pump_id options: (0-6)>_active_<option: on/off> - It activate or deactivate a pump during watering cycle\n\n" + \
                         "/set_s<sensor_id options: (0-6)>_stat_<option: on/off> - It activate or deactivate a sensor\n\n" + \
