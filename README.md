@@ -85,6 +85,16 @@ The file must be named ***main.py*** in order to be executed directly at the sta
 
 # Changelog
 
+## v2.2.0
+
+* Removed direct pump activation via telegram causing issues
+
+* Add new attribute to set back the flags for daily watering (daily_watering_done) via _watering_day
+
+* Add new cycle to reset flags for daily watering
+
+* Add new telegram messages for a better control on the variables in the running system
+
 ## v2.1.1
 
 * Add support for external LEDs for RUN and WiFi
