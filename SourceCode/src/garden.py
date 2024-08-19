@@ -454,7 +454,7 @@ class Garden:
         return False
 
     def run(self):
-        if self.is_tank_full() or True:
+        if self.is_tank_full():
             self._pump_deactivation_sem = True
             if self.is_watering_moment():
                 self.pump_cycle()
