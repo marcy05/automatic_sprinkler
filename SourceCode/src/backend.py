@@ -1,7 +1,7 @@
 # #############################################################################
 #                               IMPORT
 # #############################################################################
-import time
+import utime
 import network
 import json
 
@@ -16,8 +16,6 @@ from src.secretHandler import get_telegram_pwd
 from src.secretHandler import set_allowed_user
 from src.secretHandler import is_user_allowed
 
-from src.my_secret import secret
-
 from src.utils_func import get_time
 
 from src.hw_interface import status_led_wifi
@@ -25,6 +23,8 @@ from src.hw_interface import status_led_wifi
 # #############################################################################
 #                               CLASSES
 # #############################################################################
+
+
 class BackEndInterface:
     def __init__(self) -> None:
         logger.info(f"{self.__class__.__name__} - Init Backend interface")
@@ -67,7 +67,7 @@ class BackEndInterface:
         for i in range(max_retries):
             if not self.wlan.isconnected():
                 logger.info(f"{self.__class__.__name__} - Connection retry {i + 1}/{max_retries}")
-                time.sleep(1)
+                utime.sleep(1)
             else:
                 logger.info(f"{self.__class__.__name__} - Connected.")
                 self.network_status = True
@@ -83,7 +83,7 @@ class BackEndInterface:
                     logger.info("Setting global time...")
                     ntp.settime()
                     self.ntp_sync_done = True
-                    _current_time = time.localtime()
+                    _current_time = utime.localtime()
                     _year = _current_time[0]
                     _month = _current_time[1]
                     _day = _current_time[2]
@@ -143,10 +143,11 @@ class BackEndInterface:
                         "/get_pumps_data - Retrive Pumps data\n" + \
                         "/get_garden_timers - Retrive general garden timers\n" + \
                         "/get_garden_pumpActiveStatus - Retrive garden pumps active status\n\n" + \
+                        "/get_garden_nextWateringConditions - Retrive garden condtions to the next watering\n\n" + \
+                        "/get_garden_wateringDone - Retrive garden flag if watering was done today\n\n" + \
                         "/system_stop - It will force the system to stop running. Manual reset needed to restart.\n\n" + \
                         "\n" + \
                         "Settings commands:\n" + \
-                        "/set_p<pump_id options: (0-6)>_stat_<option: on/off> - Manually switch a pump on and off\n\n" + \
                         "/set_p<pump_id options: (0-6)>_actPeriod_<seconds as float> - It set pump activation time during watering cycle\n\n" + \
                         "/set_p<pump_id options: (0-6)>_active_<option: on/off> - It activate or deactivate a pump during watering cycle\n\n" + \
                         "/set_s<sensor_id options: (0-6)>_stat_<option: on/off> - It activate or deactivate a sensor\n\n" + \

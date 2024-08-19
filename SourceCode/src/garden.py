@@ -1,6 +1,6 @@
 # #############################################################################
 #                               IMPORT
-# ############################################################################# 
+# #############################################################################
 import gc
 import utime
 
@@ -18,6 +18,8 @@ from src.utils_func import forced_exit_txt, get_time
 # #############################################################################
 #                               CLASSES
 # #############################################################################
+
+
 class Garden:
     def __init__(self) -> None:
         logger.info(f"{self.__class__.__name__} - Init Gerden...")
@@ -28,9 +30,11 @@ class Garden:
 
         self.watering_timer = utime.time()
         self.daily_watering_done = False
-        self.watering_period = 1 * 24 * 60 * 60  # Days in seconds
-        # self.watering_period = 50  # TODO erase this for real application
+        self._watering_day = 0
+        self._watering_verification_period = 600  # Verify each 10min
+        # self._watering_verification_period = 50  # TODO erase this for real application
         self.watering_iterations = get_int_from_json("garden_watering_iteration", self._timers_persistency_path)
+        utime.sleep(1)
         self.watering_itersations_delay = get_int_from_json("garden_water_iteration_delay", self._timers_persistency_path)  # seconds of delays between one watering action and another.
 
         self.back_sync_timer = utime.time()
@@ -42,6 +46,9 @@ class Garden:
         self.log_bit_timer = utime.time()
         self.log_bit_period = 2  # Log heartbit in seconds
         logger.debug(f"{self.__class__.__name__} - [ok] timers and period initialized")
+
+        self._day_pass_timer = utime.time()
+        self._day_pass_persiod = 600  # Check each 10min
 
         logger.debug(f"{self.__class__.__name__} - Initializing pumps and sensors...")
         self.pumps = [Pump(i) for i in range(7)]
@@ -65,9 +72,10 @@ class Garden:
         self.back_sync_timer = init_time
         self.sensor_reading_timer = init_time
         self.log_bit_timer = init_time
+        self._day_pass_timer = init_time
 
     def _is_evening(self):
-        tm = utime.gmtime(utime.time())
+        tm = utime.localtime()
         month = tm[1]
         hour = tm[3]
         # Consider evening erlier in colder months
@@ -92,18 +100,28 @@ class Garden:
             pump.set_status(False)
         logger.info(f"{self.__class__.__name__} - All pumps deactivated")
 
+    def __monitor_watering_day(self):
+        current_day = utime.localtime()[2]
+        if self._watering_day != current_day:
+            self.daily_watering_done = False
+            logger.info(f"Set missing watering for the day. Last: {current_day}; Current: {self._watering_day}")
+        # else:
+        #     logger.debug(f'Current date {current_day} == Last watering {self._watering_day}')
+
     def is_watering_moment(self):
         if not self.daily_watering_done:
-            if (utime.time() - self.watering_timer) >= self.watering_period:
+            if (utime.time() - self.watering_timer) >= self._watering_verification_period:
                 if self.backend.ntp_sync_done:
                     if self._is_evening():
                         self.daily_watering_done = True
+                        self._watering_day = utime.localtime()[2]
                         return True
                     else:
                         return False
                 else:
                     logger.debug(f"{self.__class__.__name__} - NTP not sync. Watering timeout expired.")
                     self.daily_watering_done = True
+                    self._watering_day = utime.localtime()[2]
                     return True
             return False
         return False
@@ -253,9 +271,9 @@ class Garden:
         splitted_msg = msg.msg_text.split("_")
         if len(splitted_msg) == 4:
             try:
-                entity = splitted_msg[const.ENTITY_FIELD]
-                command = splitted_msg[const.ENTITY_COMMAND]
-                value = splitted_msg[const.VALUE_FIELD]
+                splitted_msg[const.ENTITY_FIELD]
+                splitted_msg[const.ENTITY_COMMAND]
+                splitted_msg[const.VALUE_FIELD]
                 return True
             except Exception as e:
                 logger.warning(f"Unexpected exception: {e}")
@@ -291,6 +309,19 @@ class Garden:
         logger.info(text)
         self.backend.bot.send(msg.chat_id, text)
 
+    def __reply_nextWateringConditions(self, msg: TelegramMessage):
+        _actual_time = utime.time()
+        logger.debug("Reply telegram")
+        text = f'Daily watering done: {self.daily_watering_done}; is tank full: {self.is_tank_full()}\n'
+        text += f'{_actual_time - self.watering_timer} >= {self._watering_verification_period} -> {(_actual_time - self.watering_timer) >= self._watering_verification_period}'
+        logger.info(text)
+        self.backend.bot.send(msg.chat_id, text)
+
+    def __reply_wateringDone(self, msg: TelegramMessage):
+        text = f"Watering done today: {self.daily_watering_done}"
+        logger.info(text)
+        self.backend.bot.send(msg.chat_id, text)
+
     def __reply_stop_system(self, msg: TelegramMessage):
         forced_exit_txt(f"{get_time()} - Forced event called by user: {msg.sender_id}")
         self.backend.bot.send(msg.chat_id, "The system will be stop immediatelly")
@@ -322,6 +353,12 @@ class Garden:
                 elif t_msg.msg_text == "/get_garden_pumpActiveStatus":
                     self.__reply_pumps_active_status(t_msg)
 
+                elif t_msg.msg_text == "/get_garden_nextWateringConditions":
+                    self.__reply_nextWateringConditions(t_msg)
+
+                elif t_msg.msg_text == "/get_garden_wateringDone":
+                    self.__reply_wateringDone(t_msg)
+
                 elif "/set_" in t_msg.msg_text:
                     logger.info("Set event detected")
                     if self.__is_valid_set_message(t_msg):
@@ -330,7 +367,7 @@ class Garden:
 
                         entity = split_msg[const.ENTITY_FIELD]  # pump, sensor, garden, backend
                         command = split_msg[const.ENTITY_COMMAND]
-                        value = split_msg[const.VALUE_FIELD]
+                        # value = split_msg[const.VALUE_FIELD]
 
                         if "p" in entity and len(entity) == 2:
                             logger.info("Pump set event detected")
@@ -410,8 +447,14 @@ class Garden:
             return True
         return False
 
+    def is_day_pass_check_moment(self):
+        # logger.debug(f"Is passed day moment check: {utime.time() - self._day_pass_timer} >= {self._day_pass_persiod}")
+        if (utime.time() - self._day_pass_timer) >= self._day_pass_persiod:
+            return True
+        return False
+
     def run(self):
-        if self.is_tank_full():
+        if self.is_tank_full() or True:
             self._pump_deactivation_sem = True
             if self.is_watering_moment():
                 self.pump_cycle()
@@ -424,6 +467,11 @@ class Garden:
         if self.is_sensor_reading_moment():
             self.reading_sensors()
             self.sensor_reading_timer = utime.time()
+
+        if self.is_day_pass_check_moment():
+            logger.info("Checking if a new day was changed")
+            self.__monitor_watering_day()
+            self._day_pass_timer = utime.time()
 
         if self.is_log_moment():
             gc.collect()
