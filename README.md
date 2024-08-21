@@ -85,6 +85,10 @@ The file must be named ***main.py*** in order to be executed directly at the sta
 
 # Changelog
 
+## v2.2.1
+
+* Add tank full control before each pump activation
+
 ## v2.2.0
 
 * Removed direct pump activation via telegram causing issues

@@ -131,7 +131,10 @@ class Garden:
             logger.debug(f"{self.__class__.__name__} - Watering iteration: {iteration + 1}/{self.watering_iterations}")
             for pump in self.pumps:
                 if pump.get_active_status():
-                    pump.watering()
+                    if self.is_tank_full():
+                        pump.watering()
+                    else:
+                        logger.warning("The tank is empty")
                 else:
                     logger.debug(f"The pump:{pump.pump_id} has Active status to False. It will be skipped")
             utime.sleep(self.watering_itersations_delay)
