@@ -146,6 +146,7 @@ class BackEndInterface:
                         "/get_garden_pumpActiveStatus - Retrive garden pumps active status\n\n" + \
                         "/get_garden_nextWateringConditions - Retrive garden condtions to the next watering\n\n" + \
                         "/get_garden_wateringDone - Retrive garden flag if watering was done today\n\n" + \
+                        "/system_reset - Force a system reset\n\n" + \
                         "/system_stop - It will force the system to stop running. Manual reset needed to restart.\n\n" + \
                         "\n" + \
                         "Settings commands:\n" + \

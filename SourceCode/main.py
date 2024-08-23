@@ -8,6 +8,7 @@ from src.hw_interface import HwInterface
 from src.hw_interface import status_led
 from src.hw_interface import status_led_ext
 from src.hw_interface import status_led_wifi
+from machine import reset
 
 # #############################################################################
 #                               GLOBAL VARIABLES
@@ -34,6 +35,13 @@ while True:
         logger.warning("Exit has been forced")
         HwInterface().reset_digital_mux()
         break
+    elif answer == "SystemReset":
+        logger.warning("Forced System reset")
+        HwInterface().reset_digital_mux()
+        status_led.value(0)
+        status_led_ext.value(0)
+        status_led_wifi.value(1)
+        reset()
 
 status_led.value(0)
 status_led_ext.value(0)

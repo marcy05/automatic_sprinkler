@@ -337,6 +337,9 @@ class Garden:
         forced_exit_txt(f"{get_time()} - Forced event called by user: {msg.sender_id}")
         self.backend.bot.send(msg.chat_id, "The system will be stop immediatelly")
 
+    def __reply_system_reset(self, msg: TelegramMessage):
+        self.backend.tg_broadcast("System has been reset!")
+
     def evaluate_data_from_telegram(self):
         logger.info(f"{self.__class__.__name__} - Listening to Telegram")
         t_msg = self.backend.bot.read_once()
@@ -348,6 +351,11 @@ class Garden:
                     self.__reply_stop_system(t_msg)
                     self.backend.bot.read_once()  # It will cancel the message on the backend.
                     return "ForcedExit"
+
+                if t_msg.msg_text == "/system_reset":
+                    self.__reply_system_reset(t_msg)
+                    self.backend.bot.read_once()  # It will cancel the message on the backend.
+                    return "SystemReset"
 
                 elif t_msg.msg_text == "/get_sensors_data":
                     self.__reply_sensor_data(t_msg)
