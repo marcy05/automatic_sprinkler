@@ -17,6 +17,7 @@ from src.secretHandler import set_allowed_user
 from src.secretHandler import is_user_allowed
 
 from src.utils_func import get_time
+from src.utils_func import _get_json_file
 
 from src.hw_interface import status_led_wifi
 
@@ -186,3 +187,12 @@ class BackEndInterface:
             logger.warning("The user is not allowed to communicate befer a successful registration")
             self.bot.send(msg.chat_id, "The user is not allowed to communicate befer a successful registration")
             return None
+
+    def tg_broadcast(self, message) -> None:
+        registered_usr = _get_json_file("src/telegram.json")["allowed_users"]
+        logger.debug(f"Sending {message} to all users: {registered_usr}")
+
+        logger.debug(f"Sending message to all users {registered_usr}")
+        for user in registered_usr:
+            self.bot.send(user, message)
+        logger.debug("Message sent to all")
