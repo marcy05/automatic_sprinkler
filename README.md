@@ -85,6 +85,10 @@ The file must be named ***main.py*** in order to be executed directly at the sta
 
 # Changelog
 
+## V2.2.2
+
+* Add broadcasted messages
+
 ## v2.2.1
 
 * Add tank full control before each pump activation

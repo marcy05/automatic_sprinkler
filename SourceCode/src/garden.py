@@ -32,7 +32,7 @@ class Garden:
         self.daily_watering_done = False
         self._watering_day = 0
         self._watering_verification_period = 600  # Verify each 10min
-        # self._watering_verification_period = 50  # TODO erase this for real application
+        # self._watering_verification_period = 60  # erase this for real application
         self.watering_iterations = get_int_from_json("garden_watering_iteration", self._timers_persistency_path)
         utime.sleep(1)
         self.watering_itersations_delay = get_int_from_json("garden_water_iteration_delay", self._timers_persistency_path)  # seconds of delays between one watering action and another.
@@ -63,6 +63,8 @@ class Garden:
 
         logger.info(f"{self.__class__.__name__} - [ok] Init completed.")
 
+        self._sem_tank_full_bot = True
+
     def init_timers(self):
         # This functions allows to sync all timers after that the NTP sync
         #   has properly set the RTC time.
@@ -90,8 +92,12 @@ class Garden:
 
     def is_tank_full(self) -> bool:
         if self._tank_level.is_tank_full():
+            self._sem_tank_full_bot = True
             return True
         else:
+            if self._sem_tank_full_bot:
+                self.backend.tg_broadcast("Tank is empty.")
+                self._sem_tank_full_bot = False
             return False
 
     def _deactivate_all_pumps(self) -> None:
@@ -127,6 +133,7 @@ class Garden:
         return False
 
     def pump_cycle(self):
+        self.backend.tg_broadcast("Start watering cycle")
         for iteration in range(self.watering_iterations):
             logger.debug(f"{self.__class__.__name__} - Watering iteration: {iteration + 1}/{self.watering_iterations}")
             for pump in self.pumps:
@@ -138,6 +145,7 @@ class Garden:
                 else:
                     logger.debug(f"The pump:{pump.pump_id} has Active status to False. It will be skipped")
             utime.sleep(self.watering_itersations_delay)
+        self.backend.tg_broadcast("Watering cycle completed")
 
     def is_backend_sync_moment(self):
         if (utime.time() - self.back_sync_timer) >= self.back_sync_period:
